@@ -1,0 +1,44 @@
+<statement> ::= <single_line_stmt> | <multi_line_stmt> |
+<FunctionDef> | <If> | <While>
+<functionDefinition> ::= 
+"function" <name> "(" <params> ? ")" ":" <block> |
+"function" <name> "(" <params> ? ")" -> <type> ":" <block>
+<params> ::= <type> <name> ("," <type> <name>)*
+<block> ::= <NEWLINE> <INDENT> <statement>* <DEDENT>
+| <single_line_stmt>
+<if> ::= "if" <expression> ":" <block> <else>?
+<else> ::= "else" ":" <block>
+<while> ::= "while" <expression> ":" <block>
+<single_line_stmt> ::= <break> | <continue> | <return>
+| <assign> | <expression> | <include>
+<include> ::= "include" <STRING> <NEWLINE>
+<return> ::= "return" <expression> <NEWLINE>
+<declare> ::= <type> <name> | <type> <name> "=" <expression>
+<assign> ::= <name> "=" <expression>
+<expression> ::= <value> | <variable> | "(" <expression> ")" |
+<expression> "<" <expression>  |
+<expression> ">" <expression>  |
+<expression> "<=" <expression> |
+<expression> ">=" <expression> |
+<expression> "==" <expression> |
+<expression> "!=" <expression> |
+<expression> "+"  <expression> |
+<expression> "-"  <expression> |
+<expression> "*"  <expression> |
+<expression> "/"  <expression> |
+<expression> "and"<expression> |
+<expression> "or" <expression> |
+"not" <expression>
+<functionCall> ::= 
+<name> "(" <arguments>  ")"
+<arguments> ::= <expression> ("," <expression>)*
+<value> ::= <NUMBER> 
+| <name> 
+| "True" 
+| "False" 
+| "Null" 
+| <list> 
+<type> ::= "Integer" | "Float" | "Boolean" | "Character" | <listType>
+<listType> ::= "List" "<" <type> ">"
+<list> ::= "[" <values>? "]"
+<values> ::= <value>*
