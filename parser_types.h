@@ -1,3 +1,9 @@
+union Value
+{
+	int intValue;
+	float decimalValue;
+};
+
 enum BinaryOperation {
     PLUS = '+',
     MINUS = '-',
@@ -8,7 +14,7 @@ enum BinaryOperation {
 };
 
 enum NodeType {
-    NUMBER_NODE = 'N',
+    VALUE_NODE = 'N',
     VARIABLE_NODE = 'V',
     BINARY_OPERATION_NODE = 'B',
     DEFINE_NODE = 'D',
@@ -26,7 +32,8 @@ enum NodeType {
 
 enum ValueType {
     INTEGER,
-    FLOAT,
+    DECIMAL,
+    BOOLEAN,
     LIST,
 };
 
@@ -39,8 +46,9 @@ struct Node {
     enum NodeType nodeType;
     int indentation;
 
-    // Type NUMBER
-    int number;
+    // Type VALUE
+    enum ValueType valueType;
+    union Value value;
 
     // Type BINARYOP
     enum BinaryOperation binaryOperation;
@@ -51,7 +59,7 @@ struct Node {
     // Type VARIABLE
     char* name;
     struct Node* expression;
-    enum ValueType ValueType;
+    //enum ValueType valueType;
 
     // Type WHILE
     struct Node* condition;
@@ -69,4 +77,7 @@ struct Node {
 
     // Type FUNCTION_CALL
     struct Node* argument;
+
+    // Type ASIGN and DEFINE
+    //enum ValueType valueType;
 };

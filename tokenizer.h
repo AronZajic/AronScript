@@ -2,7 +2,8 @@ int src_i;
 int token_i = 0;
 
 enum TokenType {
-    NUMBER_TOKEN = 'N',
+    INTEGER_VALUE_TOKEN = 'N',
+    DECIMAL_VALUE_TOKEN = 'd',
     EXPRESSION_TOKEN = 'X',
     LEFT_P_TOKEN = '(',
     RIGHT_P_TOKEN = ')',
@@ -11,8 +12,9 @@ enum TokenType {
     TAB_TOKEN = 'T',
     FOR_TOKEN = 'F',
     WHILE_TOKEN = 'W',
-    INT_TOKEN = 'I',
+    INTEGER_TOKEN = 'I',
     DECIMAL_TOKEN = 'D',
+    BOOLEAN_TOKEN = 'b',
     LIST_TOKEN = 'L',
     FUNCTION_TOKEN = 'f',
     IF_TOKEN = 'i',
@@ -25,6 +27,7 @@ enum TokenType {
     RETURN_TOKEN = 'R',
     FUNCTION_CALL_TOKEN = 'C',
     COMA_TOKEN = ',',
+    DOT_TOKEN = '.',
     ELSE_TOKEN = 'e'
 };
 
@@ -41,7 +44,7 @@ char* getKeywordTokenTypeString(enum TokenType tokenType){
         return "for";
     case WHILE_TOKEN:
         return "while";
-    case INT_TOKEN:
+    case INTEGER_TOKEN:
         return "Integer";
     case DECIMAL_TOKEN:
         return "Decimal";
@@ -121,9 +124,9 @@ int matchName(char src[], char *dest, char separators[]){
 
     int i = 0;
     while (
-        src_i+i < strlen(src) && 'a' <= src[src_i+i] && src[src_i+i] <= 'z' ||
-        src_i+i < strlen(src) && 'A' <= src[src_i+i] && src[src_i+i] <= 'Z' ||
-        src_i+i < strlen(src) && '0' <= src[src_i+i] && src[src_i+i] <= '9')
+        (src_i+i < strlen(src) && 'a' <= src[src_i+i] && src[src_i+i] <= 'z') ||
+        (src_i+i < strlen(src) && 'A' <= src[src_i+i] && src[src_i+i] <= 'Z') ||
+        (src_i+i < strlen(src) && '0' <= src[src_i+i] && src[src_i+i] <= '9'))
     {
         //dest[i] = src[src_i+i];
         i++;
@@ -185,7 +188,15 @@ int tokenize(char src[], struct Token tokens[]){
         }
 
         if(match(src, "Integer", " :", 0)){
-            tokens[token_i++].tokenType = INT_TOKEN;
+            tokens[token_i++].tokenType = INTEGER_TOKEN;
+            continue;
+        }
+        if(match(src, "Decimal", " :", 0)){
+            tokens[token_i++].tokenType = DECIMAL_TOKEN;
+            continue;
+        }
+        if(match(src, "Boolean", " :", 0)){
+            tokens[token_i++].tokenType = BOOLEAN_TOKEN;
             continue;
         }
         if(match(src, "if", " ", 0)){
@@ -217,7 +228,10 @@ int tokenize(char src[], struct Token tokens[]){
             tokens[token_i++].tokenType = COLON_TOKEN;
             continue;
         }
-
+        if(match(src, ".", NULL, 0)){
+            tokens[token_i++].tokenType = DOT_TOKEN;
+            continue;
+        }
         if(match(src, "(", NULL, 0)){
             tokens[token_i++].tokenType = LEFT_P_TOKEN;
             continue;
@@ -282,8 +296,15 @@ int tokenize(char src[], struct Token tokens[]){
 
         //char *number;
 
+        if(matchNumber(src, tokens[token_i].value, ".")){
+            tokens[token_i].tokenType = DECIMAL_VALUE_TOKEN;
+            //tokens[token_i].value = number;
+            token_i++;
+            continue;
+        }
+
         if(matchNumber(src, tokens[token_i].value, NULL)){
-            tokens[token_i].tokenType = NUMBER_TOKEN;
+            tokens[token_i].tokenType = INTEGER_VALUE_TOKEN;
             //tokens[token_i].value = number;
             token_i++;
             continue;
@@ -305,14 +326,14 @@ int tokenize(char src[], struct Token tokens[]){
 
         fprintf(stderr, "Input coud not be tokenized.\n");
 
-        for(int j = 0; j < 10; j++){
+        /*for(int j = 0; j < 10; j++){
 
             struct Token token = tokens[j];
     
             fprintf(stderr, "( %c, %c, %d, %d ), ", token.tokenType, token.value, token.value, j);
     
         }
-        return 0;
+        return 0;*/
 
     }
 

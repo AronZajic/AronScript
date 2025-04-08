@@ -41,7 +41,7 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 	if(node->nodeType == STATEMENTS_NODE){
 
 		for (GList *l = node->body; l != NULL; l = l->next) {
-			tmp = eval(l->data, contextVariables, contextFunctions).value;
+			tmp = eval(l->data, contextVariables, contextFunctions).value.intValue;
 		}
 		printf("=%d\n", tmp);
 		return 0;
@@ -51,9 +51,25 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 		eval(node, contextVariables, contextFunctions);
 	}*/
 
-	if(node->nodeType == NUMBER_NODE || node->nodeType == BINARY_OPERATION_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE){
-		tmp = eval(node, contextVariables, contextFunctions).value;
-		printf("=%d\n", tmp);
+	if(node->nodeType == VALUE_NODE || node->nodeType == BINARY_OPERATION_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE){
+
+		struct EvalNode evalNode = eval(node, contextVariables, contextFunctions);
+
+		//tmp = eval(node, contextVariables, contextFunctions).value.intValue;
+
+		if(evalNode.valueType == INTEGER){
+			printf("=%d\n", evalNode.value.intValue);
+		}
+		if(evalNode.valueType == DECIMAL){
+			printf("=%f\n", evalNode.value.decimalValue);
+		}
+		if(evalNode.valueType == BOOLEAN){
+			if(evalNode.value.intValue){
+				printf("=True\n");
+			} else {
+				printf("=False\n");
+			}
+		}
 		return 0;
 	}
 
@@ -64,11 +80,31 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 			return 0;
 		}
 
-		int *tmp = malloc(sizeof(int));
-		*tmp = eval(node->expression, contextVariables, contextFunctions).value;
+		struct EvalNode *tmp = malloc(sizeof(struct EvalNode));
+		*tmp = eval(node->expression, contextVariables, contextFunctions);
+
+		if(tmp->valueType != node->valueType){
+			fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", node->valueType, tmp->evalType);
+			return 0;
+		}
+
 		g_hash_table_insert(contextVariables, g_strdup(node->name), (tmp));
 		tmp = g_hash_table_lookup(contextVariables, node->name);
-		printf("Integer %s set to %d.\n", node->name, *tmp);
+		
+		if(tmp->valueType == INTEGER){
+			printf("Integer %s set to %d.\n", node->name, tmp->value.intValue);
+		}
+		if(tmp->valueType == DECIMAL){
+			printf("Decimal %s set to %f.\n", node->name, tmp->value.decimalValue);
+		}
+		if(tmp->valueType == BOOLEAN){
+			if(tmp->value.intValue){
+				printf("Boolean %s set to True.\n", node->name);
+			} else {
+				printf("Boolean %s set to False.\n", node->name);
+			}
+		}
+
 		return 0;
 	}
 
@@ -83,6 +119,7 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 	}
 
 	eval(node, contextVariables, contextFunctions);
+	return 0;
 }
 
 struct Node* read_file(FILE *file, struct Node *parent){
@@ -216,7 +253,7 @@ void treeprint(struct Node *root, int level){
 			return;
 	for (int i = 0; i < level; i++)
 			printf("  ");
-	printf("%c %d %c\n", root->nodeType, root->number, root->binaryOperation);
+	printf("%c %d %c\n", root->nodeType, root->value.intValue, root->binaryOperation);
 	if(root->nodeType == BINARY_OPERATION_NODE){
 		treeprint(root->left, level + 1);
 		treeprint(root->right, level + 1);
@@ -277,7 +314,7 @@ int main(int argc, char **argv) {
             exit(EXIT_FAILURE);
         }
 
-		char line[1024];
+		//char line[1024];
 
 		read_file(file, program);
 

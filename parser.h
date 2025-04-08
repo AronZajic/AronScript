@@ -37,21 +37,63 @@ struct Node* colon(){
     return NULL;
 }
 
-struct Node* number() {
+struct Node* numberInteger() {
 
     //printf("Parsing number\n");
 
     struct Token token = eat();
 
-    if(token.tokenType != NUMBER_TOKEN){
-        wrongTokenPrint("NUMBER", token);
+    if(token.tokenType != INTEGER_VALUE_TOKEN){
+        wrongTokenPrint("INTEGER VALUE", token);
         return NULL;
     }
 
     struct Node* node = malloc(sizeof(struct Node));
 
-    node->nodeType = NUMBER_NODE;
-    node->number = atoi(token.value);
+    node->nodeType = VALUE_NODE;
+    node->valueType = INTEGER;
+    node->value.intValue = atoi(token.value);
+
+    return node;
+}
+
+struct Node* dot(){
+    struct Token token = eat();
+
+    if(token.tokenType != DOT_TOKEN){
+        wrongTokenPrint("DOT", token);
+        return NULL;
+    }
+
+    return NULL;
+}
+
+struct Node* numberDecimal() {
+
+    struct Token token = eat();
+
+    if(token.tokenType != DECIMAL_VALUE_TOKEN){
+        wrongTokenPrint("DECIMAL VALUE", token);
+        return NULL;
+    }
+
+    dot();
+
+    struct Token token2 = eat();
+
+    if(token2.tokenType != INTEGER_VALUE_TOKEN){
+        wrongTokenPrint("INTEGER VALUE", token2);
+        return NULL;
+    }
+
+    char tmp[128];
+    sprintf(tmp, "%s.%s", token.value, token2.value); 
+
+    struct Node* node = malloc(sizeof(struct Node));
+
+    node->nodeType = VALUE_NODE;
+    node->valueType = DECIMAL;
+    node->value.decimalValue = atof(tmp);
 
     return node;
 }
@@ -95,11 +137,10 @@ struct Node* binary_operation() {
     node->presedence = token.presedence;
 
     return node;
+
 }
 
 struct Node* leftP() {
-
-    //printf("Parsing leftP\n");
 
     struct Token token = eat();
 
@@ -135,15 +176,18 @@ struct Node* expression() {
 
     switch (peek().tokenType)
     {
-    case NUMBER_TOKEN:
-        tmp = number();
+    case INTEGER_VALUE_TOKEN:
+        tmp = numberInteger();
+        e = handle_infix(tmp);
+        break;
+    case DECIMAL_VALUE_TOKEN:
+        tmp = numberDecimal();
         e = handle_infix(tmp);
         break;
     case NAME_TOKEN:
         tmp = variable();
         e = handle_infix(tmp);
-        break;
-    case FUNCTION_CALL_NODE:
+    case FUNCTION_CALL_TOKEN:
 		tmp = functionCall();
 		e = handle_infix(tmp);
 		break;
@@ -170,24 +214,27 @@ struct Node* expression() {
         }
 
         tmp = malloc(sizeof(struct Node));
-        tmp->nodeType = NUMBER_NODE;
-        tmp->number = 0;
+        tmp->nodeType = VALUE_NODE;
+        tmp->value.intValue = 0;
 
         e = handle_infix(tmp);
 
         break;
     default:
-        fprintf(stderr, "Could not parse expression at %c %c.\n", peek().tokenType, peek().value);
+        fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
         break;
     }
 
     return e;
 }
 
-struct Node* infix_helper(struct Node* dest){
+void infix_helper(struct Node* dest){
     switch(peek().tokenType){
-    case NUMBER_TOKEN:
-        dest->right = number();
+    case INTEGER_VALUE_TOKEN:
+        dest->right = numberInteger();
+        break;
+    case DECIMAL_VALUE_TOKEN:
+        dest->right = numberDecimal();
         break;
     case NAME_TOKEN:
         dest->right = variable();
@@ -201,7 +248,7 @@ struct Node* infix_helper(struct Node* dest){
         rightP();
         break;
     default:
-		fprintf(stderr, "Could not parse expression at %c %c.\n", peek().tokenType, peek().value);
+		fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
         dest = NULL;
     }
 }
@@ -308,8 +355,8 @@ char* name(){
 struct Node* integer() {
     struct Token token = eat();
 
-    if(token.tokenType != INT_TOKEN){
-        wrongTokenPrint("INT", token);
+    if(token.tokenType != INTEGER_TOKEN){
+        wrongTokenPrint("INTEGER", token);
         return NULL;
     }
     return NULL;
@@ -321,6 +368,7 @@ struct Node* integerDeclaration() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = DEFINE_NODE;
+    e->valueType = INTEGER;
 
     e->name = name();
 
@@ -329,12 +377,47 @@ struct Node* integerDeclaration() {
         e->expression = expression();
     } else {
         e->expression = malloc(sizeof(struct Node));
-        e->expression->nodeType = NUMBER_NODE;
-        e->expression->number = 0;
+        e->expression->nodeType = VALUE_NODE;
+        e->expression->value.intValue = 0;
+        e->expression->valueType = INTEGER;
     }
 
     return e;
 }
+
+struct Node* decimal() {
+    struct Token token = eat();
+
+    if(token.tokenType != DECIMAL_TOKEN){
+        wrongTokenPrint("DECIMAL", token);
+        return NULL;
+    }
+    return NULL;
+}
+
+struct Node* decimalDeclaration() {
+
+    decimal();
+
+    struct Node *e = malloc(sizeof(struct Node));
+    e->nodeType = DEFINE_NODE;
+    e->valueType = DECIMAL;
+
+    e->name = name();
+
+    if(peek().tokenType == ASIGN_TOKEN){
+        asign();
+        e->expression = expression();
+    } else {
+        e->expression = malloc(sizeof(struct Node));
+        e->expression->nodeType = VALUE_NODE;
+        e->expression->value.intValue = 0;
+        e->expression->valueType = DECIMAL;
+    }
+
+    return e;
+}
+
 
 struct Node* coma(){
     struct Token token = eat();
@@ -474,14 +557,18 @@ struct Node* statement() {
 
     switch (peek().tokenType)
     {
-    case NUMBER_TOKEN:
+    case INTEGER_VALUE_TOKEN:
+    case DECIMAL_VALUE_TOKEN:
     case LEFT_P_TOKEN:
     case BINARY_OPERATION_TOKEN:
 	case FUNCTION_CALL_TOKEN:
         e = expression();
         break;
-    case INT_TOKEN:
+    case INTEGER_TOKEN:
         e = integerDeclaration();
+        break;
+    case DECIMAL_TOKEN:
+        e = decimalDeclaration();
         break;
     case NAME_TOKEN:
         e = malloc(sizeof(struct Node));
@@ -512,7 +599,7 @@ struct Node* statement() {
         e = returnDescend();
         break;
     default:
-        fprintf(stderr, "Could not parse statement at %c %c.\n", peek().tokenType, peek().value);
+        fprintf(stderr, "Could not parse statement at %c %p.\n", peek().tokenType, peek().value);
         break;
     }
 
