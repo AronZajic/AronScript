@@ -146,6 +146,10 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 				result.value.intValue = left.value.intValue > right.value.intValue;
 				result.valueType = BOOLEAN;
 				break;
+			case 'Q':
+				result.value.intValue = left.value.intValue == right.value.intValue;
+				result.valueType = BOOLEAN;
+				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0}; // TODO dopisat sem typ
@@ -176,6 +180,10 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 				result.value.intValue = left.value.decimalValue > right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
+			case 'Q':
+				result.value.intValue = left.value.decimalValue == right.value.decimalValue;
+				result.valueType = BOOLEAN;
+				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
@@ -191,6 +199,9 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 				break;
 			case '>':
 				result.value.intValue = left.value.decimalValue > right.value.decimalValue;
+				break;
+			case 'Q':
+				result.value.intValue = left.value.intValue == right.value.intValue;
 				break;
 			case '+':
 			case '-':
@@ -238,6 +249,20 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 	}
 
 	if(node->nodeType == IF_NODE){
+
+		if (!node) {
+			printf("node is NULL\n");
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+		if (!node->left) {
+			printf("node->left is NULL\n");
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+		if (!node->left->body) {
+			printf("node->left->body is NULL\n");
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+
 		if(eval(node->condition, contextVariables, contextFunctions).value.intValue){
 			for (GList *listIterator = node->left->body; listIterator != NULL; listIterator = listIterator->next) {
 				struct EvalNode evalTypeTpm = eval(listIterator->data, contextVariables, contextFunctions);

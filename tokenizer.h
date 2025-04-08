@@ -28,7 +28,9 @@ enum TokenType {
     FUNCTION_CALL_TOKEN = 'C',
     COMA_TOKEN = ',',
     DOT_TOKEN = '.',
-    ELSE_TOKEN = 'e'
+    ELSE_TOKEN = 'e',
+    TRUE_TOKEN = 't',
+    FALSE_TOKEN = 'a'
 };
 
 struct Token {
@@ -187,6 +189,15 @@ int tokenize(char src[], struct Token tokens[]){
             continue;
         }
 
+        if(match(src, "True", NULL, 0)){
+            tokens[token_i++].tokenType = TRUE_TOKEN;
+            continue;
+        }
+        if(match(src, "False", NULL, 0)){
+            tokens[token_i++].tokenType = FALSE_TOKEN;
+            continue;
+        }
+
         if(match(src, "Integer", " :", 0)){
             tokens[token_i++].tokenType = INTEGER_TOKEN;
             continue;
@@ -240,15 +251,14 @@ int tokenize(char src[], struct Token tokens[]){
             tokens[token_i++].tokenType = RIGHT_P_TOKEN;
             continue;
         }
-        if(match(src, "==", NULL, 0)){
-            tokens[token_i++].tokenType = EQUALS_TOKEN;
-            continue;
-        }
-        if(match(src, "=", NULL, 0)){
-            tokens[token_i++].tokenType = ASIGN_TOKEN;
-            continue;
-        }
 
+        if(match(src, "==", NULL, 0)){
+            tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
+            tokens[token_i].presedence = 1;
+            tokens[token_i].value[0] = 'Q';
+            token_i++;
+            continue;
+        }
         if(match(src, "<", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
@@ -294,6 +304,11 @@ int tokenize(char src[], struct Token tokens[]){
             continue;
         }
 
+        if(match(src, "=", NULL, 0)){
+            tokens[token_i++].tokenType = ASIGN_TOKEN;
+            continue;
+        }
+
         //char *number;
 
         if(matchNumber(src, tokens[token_i].value, ".")){
@@ -325,6 +340,7 @@ int tokenize(char src[], struct Token tokens[]){
         }
 
         fprintf(stderr, "Input coud not be tokenized.\n");
+        return 0;
 
         /*for(int j = 0; j < 10; j++){
 

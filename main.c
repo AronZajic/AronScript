@@ -165,7 +165,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 
 				struct Node* tmp = read_file(file, node->left);
 
-				if(tmp->nodeType == ELSE_NODE){
+				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
 					node->right = malloc(sizeof(struct Node));
 					node->right->indentation = node->indentation;
 					node->right->nodeType = STATEMENTS_NODE;
@@ -183,13 +183,13 @@ struct Node* read_file(FILE *file, struct Node *parent){
 	return NULL;   
 }
 
-struct Node* replRead(struct Node *parent){
+struct Node* replRead(struct Node *parent, char lineStart){
 
 	struct Node *node;
 
 	char input[1024];
 
-	printf(".");
+	printf("%c", lineStart);
 	fgets(input, sizeof(input), stdin);
 	input[strcspn(input, "\n")] = 0;
 
@@ -214,7 +214,7 @@ struct Node* replRead(struct Node *parent){
 			}
 
 			if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
-				struct Node* tmp = replRead(node);
+				struct Node* tmp = replRead(node, ';');
 				node = tmp;
 				goto placeNode;
 			}
@@ -225,15 +225,15 @@ struct Node* replRead(struct Node *parent){
 				node->left->nodeType = STATEMENTS_NODE;
 				node->left->body = NULL;
 
-				struct Node* tmp = replRead(node->left);
+				struct Node* tmp = replRead(node->left, ';');
 
-				if(tmp->nodeType == ELSE_NODE){
+				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
 					node->right = malloc(sizeof(struct Node));
 					node->right->indentation = node->indentation;
 					node->right->nodeType = STATEMENTS_NODE;
 					node->right->body = NULL;
 
-					tmp = replRead(node->right);
+					tmp = replRead(node->right, ';');
 				} else {
 					node->right = NULL;
 				}
@@ -241,7 +241,10 @@ struct Node* replRead(struct Node *parent){
 				goto placeNode;
 			}
 		}
-		printf(".");
+		if(lineStart == '>'){
+			return NULL;
+		}
+		printf("%c", lineStart);
 		fgets(input, sizeof(input), stdin);
 		input[strcspn(input, "\n")] = 0;
 	}
@@ -279,12 +282,19 @@ int main(int argc, char **argv) {
 
 	if(argc == 1){
 
-		char input[1024];
+		//char input[1024];
 
 		while (1)
 		{
-			printf(">");
-			fgets(input, sizeof(input), stdin);
+			//printf(">");
+
+			program->body = NULL;
+
+			replRead(program, '>');
+
+			replPrint(program, variables, functions);
+
+			/*fgets(input, sizeof(input), stdin);
 			input[strcspn(input, "\n")] = 0;
 
 			//printf("$%s$", input);
@@ -295,13 +305,19 @@ int main(int argc, char **argv) {
 				if(
 					node->nodeType == FUNCTION_DECLARATION_NODE ||
 					node->nodeType == WHILE_NODE ||
-					node->nodeType == IF_NODE ||
 					node->nodeType == ELSE_NODE
 				) {
 					replRead(node);
 				}
+				if(node->nodeType == IF_NODE){
+					node->left = malloc(sizeof(struct Node));
+					node->left->indentation = node->indentation;
+					node->left->nodeType = STATEMENTS_NODE;
+					node->left->body = NULL;
+					replRead(node->left);
+				}
 				replPrint(node, variables, functions);
-			}
+			}*/
 		}
 	} else {
 

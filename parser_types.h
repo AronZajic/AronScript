@@ -11,6 +11,7 @@ enum BinaryOperation {
     DIVIDE = '/',
     LESS_THAN = '<',
     GREATER_THAN = '>',
+    EQUALS = 'Q'
 };
 
 enum NodeType {

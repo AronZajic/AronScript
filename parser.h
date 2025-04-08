@@ -16,11 +16,12 @@ struct Token eat(){
 }
 
 void wrongTokenPrint(char expected[], struct Token token){
+    
 	/*for(int j = 0; j < 10; j++){
 
         struct Token token = tokens[j];
 
-        printf("( %c, %s, %d ), ", token.tokenType, token.value, j);
+        fprintf(stderr, "( %c, %s, %d ), ", token.tokenType, token.value, j);
 
     }*/
 	fprintf(stderr, "\nWrong token! %s token expected, got %c token at (%d).\n", expected, token.tokenType, token_i_parser-1);
@@ -37,7 +38,7 @@ struct Node* colon(){
     return NULL;
 }
 
-struct Node* numberInteger() {
+struct Node* integerValue() {
 
     //printf("Parsing number\n");
 
@@ -68,7 +69,7 @@ struct Node* dot(){
     return NULL;
 }
 
-struct Node* numberDecimal() {
+struct Node* decimalValue() {
 
     struct Token token = eat();
 
@@ -94,6 +95,31 @@ struct Node* numberDecimal() {
     node->nodeType = VALUE_NODE;
     node->valueType = DECIMAL;
     node->value.decimalValue = atof(tmp);
+
+    return node;
+}
+
+struct Node* booleanValue() {
+
+    //printf("Parsing number\n");
+
+    struct Token token = eat();
+
+    if(token.tokenType != TRUE_TOKEN && token.tokenType != FALSE_TOKEN){
+        wrongTokenPrint("BOOLEAN", token);
+        return NULL;
+    }
+
+    struct Node* node = malloc(sizeof(struct Node));
+
+    node->nodeType = VALUE_NODE;
+    node->valueType = BOOLEAN;
+
+    if(token.tokenType == TRUE_TOKEN){
+        node->value.intValue = 1;
+    } else {
+        node->value.intValue = 0;
+    }
 
     return node;
 }
@@ -177,16 +203,22 @@ struct Node* expression() {
     switch (peek().tokenType)
     {
     case INTEGER_VALUE_TOKEN:
-        tmp = numberInteger();
+        tmp = integerValue();
         e = handle_infix(tmp);
         break;
     case DECIMAL_VALUE_TOKEN:
-        tmp = numberDecimal();
+        tmp = decimalValue();
+        e = handle_infix(tmp);
+        break;
+    case TRUE_TOKEN:
+    case FALSE_TOKEN:
+        tmp = booleanValue();
         e = handle_infix(tmp);
         break;
     case NAME_TOKEN:
         tmp = variable();
         e = handle_infix(tmp);
+        break;
     case FUNCTION_CALL_TOKEN:
 		tmp = functionCall();
 		e = handle_infix(tmp);
@@ -197,17 +229,19 @@ struct Node* expression() {
         tmp = expression();
         rightP();
 
-        if(peek().tokenType == BINARY_OPERATION_TOKEN){
+        /*if(peek().tokenType == BINARY_OPERATION_TOKEN){
             e = binary_operation();
             e->left = tmp;
             e->right = expression();
         } else {
             e = tmp;
-        }
+        }*/
+
+        e = handle_infix(tmp);
         break;
     case BINARY_OPERATION_TOKEN:
         //printf("Expression BIN\n");
-        if(peek().value[0] == '*' || peek().value[0] == '/'){ // TODO prerobiť lebo takto môze cačať aj so zobakom
+        if(peek().value[0] == '*' || peek().value[0] == '/'){ // TODO prerobiť lebo takto môze začať aj so zobakom
             fprintf(stderr, "Expression can not start with %c.\n", peek().value[0]);
             e = NULL;
             break;
@@ -231,10 +265,14 @@ struct Node* expression() {
 void infix_helper(struct Node* dest){
     switch(peek().tokenType){
     case INTEGER_VALUE_TOKEN:
-        dest->right = numberInteger();
+        dest->right = integerValue();
         break;
     case DECIMAL_VALUE_TOKEN:
-        dest->right = numberDecimal();
+        dest->right = decimalValue();
+        break;
+    case TRUE_TOKEN:
+    case FALSE_TOKEN:
+        dest->right = booleanValue();
         break;
     case NAME_TOKEN:
         dest->right = variable();
@@ -418,6 +456,39 @@ struct Node* decimalDeclaration() {
     return e;
 }
 
+struct Node* boolean() {
+    struct Token token = eat();
+
+    if(token.tokenType != BOOLEAN_TOKEN){
+        wrongTokenPrint("BOOLEAN", token);
+        return NULL;
+    }
+    return NULL;
+}
+
+struct Node* booleanDeclaration() {
+
+    boolean();
+
+    struct Node *e = malloc(sizeof(struct Node));
+    e->nodeType = DEFINE_NODE;
+    e->valueType = BOOLEAN;
+
+    e->name = name();
+
+    if(peek().tokenType == ASIGN_TOKEN){
+        asign();
+        e->expression = expression();
+    } else {
+        e->expression = malloc(sizeof(struct Node));
+        e->expression->nodeType = VALUE_NODE;
+        e->expression->value.intValue = 0;
+        e->expression->valueType = BOOLEAN;
+    }
+
+    return e;
+}
+
 
 struct Node* coma(){
     struct Token token = eat();
@@ -559,6 +630,8 @@ struct Node* statement() {
     {
     case INTEGER_VALUE_TOKEN:
     case DECIMAL_VALUE_TOKEN:
+    case TRUE_TOKEN:
+    case FALSE_TOKEN:
     case LEFT_P_TOKEN:
     case BINARY_OPERATION_TOKEN:
 	case FUNCTION_CALL_TOKEN:
@@ -569,6 +642,9 @@ struct Node* statement() {
         break;
     case DECIMAL_TOKEN:
         e = decimalDeclaration();
+        break;
+    case BOOLEAN_TOKEN:
+        e = booleanDeclaration();
         break;
     case NAME_TOKEN:
         e = malloc(sizeof(struct Node));
