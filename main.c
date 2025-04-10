@@ -34,7 +34,7 @@
 	return tmp;
 }*/
 
-int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *contextFunctions){
+int replPrint(struct Node* node, struct Context *context){
 
 	struct EvalNode evalNode;
 
@@ -44,7 +44,7 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 
 		for (GList *l = node->body; l != NULL; l = l->next) {
 
-			evalNode = eval(l->data, contextVariables, contextFunctions);
+			evalNode = eval(l->data, context);
 
 			didSomething = 1;
 		}
@@ -75,7 +75,7 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 
 		//tmp = eval(node, contextVariables, contextFunctions).value.intValue;
 
-		evalNode = eval(node, contextVariables, contextFunctions);
+		evalNode = eval(node, context);
 
 		if(evalNode.evalType == NULL_TYPE){
 			printf("Error got NULL type as result.\n");
@@ -137,20 +137,20 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 
 	if(node->nodeType == DEFINE_NODE){
 
-		if(g_hash_table_contains(contextVariables, node->name)){
+		if(g_hash_table_contains(context->variables, node->name)){
 			fprintf(stderr, "Variable %s already defined.\n", node->name);
 			return 0;
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
-		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
+		*tmpExpression = eval(node->expression, context);
 
 		if(tmpExpression->valueType != node->valueType){
 			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->valueType, tmpExpression->valueType);
 			return 0;
 		}
 
-		g_hash_table_insert(contextVariables, g_strdup(node->name), tmpExpression);
+		g_hash_table_insert(context->variables, g_strdup(node->name), tmpExpression);
 
 		if(tmpExpression->valueType == INTEGER){
 			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.intValue);
@@ -171,22 +171,22 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 
 	if(node->nodeType == ASIGN_NODE){
 
-		if(!g_hash_table_contains(contextVariables, node->name)){
+		if(!g_hash_table_contains(context->variables, node->name)){
 			fprintf(stderr, "Variable %s not defined.\n", node->name);
 			return 0;
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
-		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
+		*tmpExpression = eval(node->expression, context);
 
-		struct EvalNode *tmpVariable = g_hash_table_lookup(contextVariables, node->name);
+		struct EvalNode *tmpVariable = g_hash_table_lookup(context->variables, node->name);
 
 		if(tmpExpression->valueType != tmpVariable->valueType){
 			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
 			return 0;
 		}
 
-		g_hash_table_insert(contextVariables, g_strdup(node->name), tmpExpression);
+		g_hash_table_insert(context->variables, g_strdup(node->name), tmpExpression);
 
 		if(tmpExpression->valueType == INTEGER){
 			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.intValue);
@@ -206,16 +206,16 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 	}
 
 	if(node->nodeType == FUNCTION_DECLARATION_NODE){
-		if(g_hash_table_contains(contextFunctions, node->name)){
+		if(g_hash_table_contains(context->functions, node->name)){
 			fprintf(stderr, "Function %s already defined.\n", node->name);
 			return 0;
 		}
-		g_hash_table_insert(contextFunctions, g_strdup(node->name), node);
+		g_hash_table_insert(context->functions, g_strdup(node->name), node);
 		printf("Function %s defined.\n", node->name);
 		return 0;
 	}
 
-	eval(node, contextVariables, contextFunctions);
+	eval(node, context);
 	return 0;
 }
 
@@ -249,7 +249,9 @@ struct Node* read_file(FILE *file, struct Node *parent){
 			}
 
 			if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
-				struct Node* tmp = read_file(file, node);
+				node->statements = malloc(sizeof(struct Node));
+				node->statements->nodeType = STATEMENTS_NODE;
+				struct Node* tmp = read_file(file, node->statements);
 				node = tmp;
 				goto placeNode;
 			}
@@ -387,8 +389,13 @@ int main(int argc, char **argv) {
 	variables = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
 	functions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
 
-	eval(parse("function print ( Integer i ) :"), variables, functions);
-	eval(parse("function printLine ( Integer i ) :"), variables, functions);
+	struct Context *context = malloc(sizeof(struct Context));
+	context->parent = NULL;
+	context->variables = variables;
+	context->functions = functions;
+
+	eval(parse("function print ( Integer i ) :"), context);
+	eval(parse("function printLine ( Integer i ) :"), context);
 
 	struct Node *program = malloc(sizeof(struct Node));
 	program->nodeType = STATEMENTS_NODE;
@@ -408,7 +415,7 @@ int main(int argc, char **argv) {
 			replRead(program, '>');
 
 			if(g_list_length(program->body) != 0)
-				replPrint(program->body->data, variables, functions);
+				replPrint(program->body->data, context);
 
 			/*fgets(input, sizeof(input), stdin);
 			input[strcspn(input, "\n")] = 0;
@@ -432,7 +439,7 @@ int main(int argc, char **argv) {
 					node->left->body = NULL;
 					replRead(node->left);
 				}
-				replPrint(node, variables, functions);
+				replPrint(node, variables, functions);->
 			}*/
 		}
 	} else {
@@ -452,10 +459,12 @@ int main(int argc, char **argv) {
 
 		//treeprint(program, 0);
 
-		replPrint(program, variables, functions);
+		replPrint(program, context);
+		//eval(program, context);
 
 	}
 		
 	g_hash_table_destroy(variables);
+	g_hash_table_destroy(functions);
     exit(EXIT_SUCCESS);
 }

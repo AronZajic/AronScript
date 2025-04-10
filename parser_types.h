@@ -74,20 +74,17 @@ struct Node {
 
     // Type WHILE
     struct Node* condition;
-    //struct Node* body[1024];
     GList* body;
+    struct Node* statements;
 
     // Type FUNCTION_DECLARATION
     // char* name;
-    //struct Parameter parameters[1024];
     enum ValueType retutnType;
-    // struct Node* body[1024];
 
     // Type RETURN
     // struct Node* expression;
 
     // Type FUNCTION_CALL
-    //struct Node* argument;
     GList* arguments;
 
     // Type ASIGN and DEFINE

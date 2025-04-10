@@ -664,7 +664,7 @@ struct Node* whileDescend() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = WHILE_NODE;
-    e->body = NULL;
+    e->statements = NULL;
 
     e->condition = expression();
 
