@@ -32,16 +32,16 @@ enum NodeType {
 };
 
 enum ValueType {
-    INTEGER,
-    DECIMAL,
-    BOOLEAN,
-    LIST,
+    INTEGER = 'I',
+    DECIMAL = 'D',
+    BOOLEAN = 'B',
+    LIST = 'L',
 };
 
-struct Parameter {
+/*struct Parameter {
     enum ValueType type;
     char* name;
-};
+};*/
 
 struct Node {
     enum NodeType nodeType;
@@ -69,7 +69,7 @@ struct Node {
 
     // Type FUNCTION_DECLARATION
     // char* name;
-    struct Parameter parameters[1024];
+    //struct Parameter parameters[1024];
     enum ValueType retutnType;
     // struct Node* body[1024];
 
@@ -77,7 +77,8 @@ struct Node {
     // struct Node* expression;
 
     // Type FUNCTION_CALL
-    struct Node* argument;
+    //struct Node* argument;
+    GList* arguments;
 
     // Type ASIGN and DEFINE
     //enum ValueType valueType;

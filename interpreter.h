@@ -4,9 +4,9 @@
 #include "parser.h"
 
 enum EvalType {
-	VALUE_TYPE,
-	NULL_TYPE,
-	RETURN_TYPE
+	VALUE_TYPE = 'V',
+	NULL_TYPE = 'N',
+	RETURN_TYPE = 'R'
 };
 
 struct EvalNode {
@@ -17,6 +17,10 @@ struct EvalNode {
 
 
 struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable *contextFunctions){
+
+	/*if(node == NULL){
+		return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+	}*/
 
 	if(node->nodeType == VALUE_NODE){
 		return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=node->valueType, .value.intValue=node->value.intValue};
@@ -45,15 +49,6 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 
 	if(node->nodeType == FUNCTION_CALL_NODE){
 
-		if(strcmp(node->name, "printline") == 0){
-			printf("%d\n", eval(node->argument, contextVariables, contextFunctions).value.intValue);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
-		}
-		if(strcmp(node->name, "print") == 0){
-			printf("%d", eval(node->argument, contextVariables, contextFunctions).value.intValue);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
-		}
-
 		if(!g_hash_table_contains(contextFunctions, node->name)){
 			fprintf(stderr, "Function with the name \"%s\" does not exist.\n", node->name);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
@@ -61,25 +56,70 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 
 		struct Node* functionDefinition = g_hash_table_lookup(contextFunctions, node->name);
 
+		int nodeArgsLen = g_list_length(node->arguments);
+		int functionDefinitionArgsLen = g_list_length(functionDefinition->arguments);
+
 		GHashTable *contextVariablesInFunction = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
 
-		if(node->argument != NULL){
+		if(nodeArgsLen != functionDefinitionArgsLen){
+			fprintf(stderr, "Wrong number of arguments. Function \"%s\" takes %d argumet(s).\n", node->name, functionDefinitionArgsLen);
+		}
 
-			int *tmp = malloc(sizeof(int));
-			*tmp = eval(node->argument, contextVariables, contextFunctions).value.intValue;
+		GList *listIteratorNode = node->arguments;
+		GList *listIteratorDefinition = functionDefinition->arguments;
 
-			g_hash_table_insert(contextVariablesInFunction, g_strdup(functionDefinition->argument->name), tmp);
+		int i = 0;
 
+		while(listIteratorNode != NULL){
+
+			struct Node *argumentCall = (struct Node*)listIteratorNode->data;
+			struct Node *argumentFunction = (struct Node*)listIteratorDefinition->data;
+
+			struct EvalNode *evalValue = malloc(sizeof(struct EvalNode));
+			*evalValue = eval(argumentCall, contextVariables, contextFunctions);
+
+			if(evalValue->evalType == NULL_TYPE){
+				fprintf(stderr, "Error, got NULL type as function call argument at position %d.\n", i);
+			}
+
+			if(argumentFunction->valueType != evalValue->valueType){
+				fprintf(stderr, "Wrong type of argument, got type %c. Function \"%s\" takes argumet of type %c at postion %d.\n", evalValue->valueType, node->name, argumentFunction->valueType, i);
+			}
+
+			//struct EvalNode *tmp = malloc(sizeof(struct EvalNode));
+			//*tmp->evalType = evalValue.evalType;
+
+			g_hash_table_insert(contextVariablesInFunction, g_strdup(argumentFunction->name), evalValue);
+
+			listIteratorNode = listIteratorNode->next;
+			listIteratorDefinition = listIteratorDefinition->next;
+			i++;
+		}
+
+		if(strcmp(node->name, "printline") == 0){
+			printf("%d\n", eval((struct Node*)node->arguments->data, contextVariables, contextFunctions).value.intValue);
+			g_hash_table_destroy(contextVariablesInFunction);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+		if(strcmp(node->name, "print") == 0){
+			printf("%d", eval((struct Node*)node->arguments->data, contextVariables, contextFunctions).value.intValue);
+			g_hash_table_destroy(contextVariablesInFunction);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 		}
 
 		for (GList *listIterator = functionDefinition->body; listIterator != NULL; listIterator = listIterator->next) {
 			
 			struct Node* statement = listIterator->data;
 			
-			struct EvalNode evalTypeTpm = eval(statement, contextVariablesInFunction, contextFunctions);
-			if(evalTypeTpm.evalType == RETURN_TYPE){
+			struct EvalNode evalNodeTmp = eval(statement, contextVariablesInFunction, contextFunctions);
+			if(evalNodeTmp.evalType == RETURN_TYPE){
 				g_hash_table_destroy(contextVariablesInFunction);
-				return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=evalTypeTpm.valueType, .value.intValue=evalTypeTpm.value.intValue};
+
+				if(evalNodeTmp.valueType != functionDefinition->retutnType){
+					fprintf(stderr, "Wrong return type %c. Function \"%s\" return type %c.\n", evalNodeTmp.valueType, node->name, functionDefinition->retutnType);
+				}
+
+				return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=functionDefinition->retutnType, .value.intValue=evalNodeTmp.value.intValue};
 			}
 		}
 
@@ -89,8 +129,8 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 	}
 
 	if(node->nodeType == RETURN_NODE){
-		int tmp = eval(node->expression, contextVariables, contextFunctions).value.intValue;
-		return (struct EvalNode){.evalType=RETURN_TYPE, .value.intValue=tmp};
+		struct EvalNode tmp = eval(node->expression, contextVariables, contextFunctions);
+		return (struct EvalNode){.evalType=RETURN_TYPE, .valueType=tmp.valueType, .value.intValue=tmp.value.intValue};
 	}
 
 	if(node->nodeType == BINARY_OPERATION_NODE){
@@ -109,12 +149,12 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
         }
 
 		if(left.evalType != right.evalType){
-            fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.evalType, right.evalType);
+            fprintf(stderr, "ELeft and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.evalType, right.evalType);
             return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
         }
 
 		if(left.valueType != right.valueType){
-            fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.valueType, right.valueType);
+            fprintf(stderr, "VLeft and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.valueType, right.valueType);
             return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
         }
 
@@ -152,7 +192,7 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
-				result = (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0}; // TODO dopisat sem typ
+				result = (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 			}
 		}
 
@@ -194,20 +234,16 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 			result.valueType = BOOLEAN;
 			switch (node->binaryOperation)
 			{
-			case '<':
-				result.value.intValue = left.value.decimalValue < right.value.decimalValue;
-				break;
-			case '>':
-				result.value.intValue = left.value.decimalValue > right.value.decimalValue;
-				break;
 			case 'Q':
 				result.value.intValue = left.value.intValue == right.value.intValue;
 				break;
+			case '<':
+			case '>':
 			case '+':
 			case '-':
 			case '*':
 			case '/':
-				fprintf(stderr, "BOOLEAN types do not support eritmetic operations.\n");
+				fprintf(stderr, "BOOLEAN types do not support aritmetic operations, > and <.\n");
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 				break;
 			default:
@@ -218,30 +254,52 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
         return result;
 	}
 
-	if(node->nodeType == DEFINE_NODE || node->nodeType == ASIGN_NODE){
+	if(node->nodeType == DEFINE_NODE){
 
-		if(node->nodeType == DEFINE_NODE && g_hash_table_contains(contextVariables, node->name)){
+		if(g_hash_table_contains(contextVariables, node->name)){
 			fprintf(stderr, "Variable %s already defined.\n", node->name);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 		}
 
-		struct EvalNode *tmp = malloc(sizeof(struct EvalNode));
-		*tmp = eval(node->expression, contextVariables, contextFunctions);
+		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
+		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
 
-		if(tmp->valueType != node->valueType){
-			fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", node->valueType, tmp->evalType);
+		if(tmpExpression->valueType != node->valueType){
+			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->valueType, tmpExpression->valueType);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 		}
 
-		g_hash_table_insert(contextVariables, g_strdup(node->name), tmp);
+		g_hash_table_insert(contextVariables, g_strdup(node->name), tmpExpression);
+		return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+	}
+
+	if(node->nodeType == ASIGN_NODE){
+
+		if(!g_hash_table_contains(contextVariables, node->name)){
+			fprintf(stderr, "Variable %s not defined.\n", node->name);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+
+		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
+		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
+
+		struct EvalNode *tmpVariable = g_hash_table_lookup(contextVariables, node->name);
+
+		if(tmpExpression->valueType != tmpVariable->valueType){
+			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+
+		g_hash_table_insert(contextVariables, g_strdup(node->name), tmpExpression);
 		return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 	}
 
 	if(node->nodeType == WHILE_NODE){
 		while(eval(node->condition, contextVariables, contextFunctions).value.intValue){
 			for (GList *listIterator = node->body; listIterator != NULL; listIterator = listIterator->next) {
-				struct EvalNode evalTypeTpm = eval(listIterator->data, contextVariables, contextFunctions);
-				if(evalTypeTpm.evalType == RETURN_TYPE){
-					return evalTypeTpm;
+				struct EvalNode evalNodeTmp = eval(listIterator->data, contextVariables, contextFunctions);
+				if(evalNodeTmp.evalType == RETURN_TYPE){
+					return evalNodeTmp;
 				}
 			}
 		}
@@ -250,37 +308,24 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 
 	if(node->nodeType == IF_NODE){
 
-		if (!node) {
-			printf("node is NULL\n");
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
-		}
-		if (!node->left) {
-			printf("node->left is NULL\n");
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
-		}
-		if (!node->left->body) {
-			printf("node->left->body is NULL\n");
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
-		}
-
 		if(eval(node->condition, contextVariables, contextFunctions).value.intValue){
 			for (GList *listIterator = node->left->body; listIterator != NULL; listIterator = listIterator->next) {
-				struct EvalNode evalTypeTpm = eval(listIterator->data, contextVariables, contextFunctions);
-				if(evalTypeTpm.evalType == RETURN_TYPE){
-					return evalTypeTpm;
+				struct EvalNode evalNodeTmp = eval(listIterator->data, contextVariables, contextFunctions);
+				if(evalNodeTmp.evalType == RETURN_TYPE){
+					return evalNodeTmp;
 				}
 			}
 		} else if(node->right != NULL) {
 			for (GList *listIterator = node->right->body; listIterator != NULL; listIterator = listIterator->next) {
-				struct EvalNode evalTypeTpm = eval(listIterator->data, contextVariables, contextFunctions);
-				if(evalTypeTpm.evalType == RETURN_TYPE){
-					return evalTypeTpm;
+				struct EvalNode evalNodeTmp = eval(listIterator->data, contextVariables, contextFunctions);
+				if(evalNodeTmp.evalType == RETURN_TYPE){
+					return evalNodeTmp;
 				}
 			}
 		}
 		return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 	}
 
-	fprintf(stderr, "ERROR! NODE TYPE %c NOT IMPLEMENTED!\n", node->nodeType);
+	fprintf(stderr, "ERROR! NODE TYPE %c %d NOT IMPLEMENTED!\n", node->nodeType, node->nodeType);
 	return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 }

@@ -547,6 +547,8 @@ struct Node* functionDeclaration() {
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = FUNCTION_DECLARATION_NODE;
     e->body = NULL;
+    e->arguments = NULL;
+    e->retutnType = NULL;
 
     if(peek().tokenType == NAME_TOKEN){
         e->name = name();
@@ -562,13 +564,13 @@ struct Node* functionDeclaration() {
     leftP();
 
 	if(peek().tokenType != RIGHT_P_TOKEN){
-		e->argument = integerDeclaration();
+		e->arguments = g_list_append(e->arguments, integerDeclaration());
 	}
 
 	while (peek().tokenType != RIGHT_P_TOKEN)
     {	
 		coma();
-        e->argument = integerDeclaration();
+        e->arguments = g_list_append(e->arguments, integerDeclaration());
     }
 
     rightP();
@@ -576,6 +578,7 @@ struct Node* functionDeclaration() {
     if(peek().tokenType == ARROW_TOKEN){
         eat();
         integer();
+        e->retutnType = INTEGER;
     }
 
     colon();
@@ -603,16 +606,16 @@ struct Node* functionCall() {
     //node->name = malloc(sizeof(token.value));
     //strncpy(node->name, token.value, strlen(token.value));
     node->name = g_strdup(token.value);
-    node->argument = NULL;
+    node->arguments = NULL;
 
 	if(peek().tokenType != RIGHT_P_TOKEN){
-		node->argument = expression();
+        node->arguments = g_list_append(node->arguments, expression());
 	}
 
 	while (peek().tokenType != RIGHT_P_TOKEN)
     {	
 		coma();
-        node->argument = expression();
+        node->arguments = g_list_append(node->arguments, expression());
     }
 
     rightP();

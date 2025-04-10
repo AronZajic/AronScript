@@ -36,14 +36,34 @@
 
 int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *contextFunctions){
 
-	int tmp;
+	struct EvalNode evalNode;
 
 	if(node->nodeType == STATEMENTS_NODE){
 
+		int didSomething = 0;
+
 		for (GList *l = node->body; l != NULL; l = l->next) {
-			tmp = eval(l->data, contextVariables, contextFunctions).value.intValue;
+
+			evalNode = eval(l->data, contextVariables, contextFunctions);
+
+			didSomething = 1;
 		}
-		printf("=%d\n", tmp);
+		if(didSomething){
+
+			if(evalNode.valueType == INTEGER){
+				printf("=%d\n", evalNode.value.intValue);
+			}
+			if(evalNode.valueType == DECIMAL){
+				printf("=%f\n", evalNode.value.decimalValue);
+			}
+			if(evalNode.valueType == BOOLEAN){
+				if(evalNode.value.intValue){
+					printf("=True\n");
+				} else {
+					printf("=False\n");
+				}
+			}
+		}
 		return 0;
 	}
 
@@ -53,9 +73,16 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 
 	if(node->nodeType == VALUE_NODE || node->nodeType == BINARY_OPERATION_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE){
 
-		struct EvalNode evalNode = eval(node, contextVariables, contextFunctions);
-
 		//tmp = eval(node, contextVariables, contextFunctions).value.intValue;
+
+		evalNode = eval(node, contextVariables, contextFunctions);
+
+		if(evalNode.evalType == NULL_TYPE){
+			printf("Error got NULL type as result.\n");
+			return 0;
+		}
+
+		//printf("got type %c:", evalNode.valueType);
 
 		if(evalNode.valueType == INTEGER){
 			printf("=%d\n", evalNode.value.intValue);
@@ -73,7 +100,7 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 		return 0;
 	}
 
-	if(node->nodeType == DEFINE_NODE || node->nodeType == ASIGN_NODE){
+	/*if(node->nodeType == DEFINE_NODE || node->nodeType == ASIGN_NODE){
 
 		if(node->nodeType == DEFINE_NODE && g_hash_table_contains(contextVariables, node->name)){
 			fprintf(stderr, "Variable %s already defined.\n", node->name);
@@ -84,7 +111,7 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 		*tmp = eval(node->expression, contextVariables, contextFunctions);
 
 		if(tmp->valueType != node->valueType){
-			fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", node->valueType, tmp->evalType);
+			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", node->valueType, tmp->evalType);
 			return 0;
 		}
 
@@ -99,6 +126,76 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 		}
 		if(tmp->valueType == BOOLEAN){
 			if(tmp->value.intValue){
+				printf("Boolean %s set to True.\n", node->name);
+			} else {
+				printf("Boolean %s set to False.\n", node->name);
+			}
+		}
+
+		return 0;
+	}*/
+
+	if(node->nodeType == DEFINE_NODE){
+
+		if(g_hash_table_contains(contextVariables, node->name)){
+			fprintf(stderr, "Variable %s already defined.\n", node->name);
+			return 0;
+		}
+
+		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
+		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
+
+		if(tmpExpression->valueType != node->valueType){
+			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->valueType, tmpExpression->valueType);
+			return 0;
+		}
+
+		g_hash_table_insert(contextVariables, g_strdup(node->name), tmpExpression);
+
+		if(tmpExpression->valueType == INTEGER){
+			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.intValue);
+		}
+		if(tmpExpression->valueType == DECIMAL){
+			printf("Decimal %s set to %f.\n", node->name, tmpExpression->value.decimalValue);
+		}
+		if(tmpExpression->valueType == BOOLEAN){
+			if(tmpExpression->value.intValue){
+				printf("Boolean %s set to True.\n", node->name);
+			} else {
+				printf("Boolean %s set to False.\n", node->name);
+			}
+		}
+
+		return 0;
+	}
+
+	if(node->nodeType == ASIGN_NODE){
+
+		if(!g_hash_table_contains(contextVariables, node->name)){
+			fprintf(stderr, "Variable %s not defined.\n", node->name);
+			return 0;
+		}
+
+		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
+		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
+
+		struct EvalNode *tmpVariable = g_hash_table_lookup(contextVariables, node->name);
+
+		if(tmpExpression->valueType != tmpVariable->valueType){
+			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
+			return 0;
+		}
+
+		g_hash_table_insert(contextVariables, g_strdup(node->name), tmpExpression);
+
+		if(tmpExpression->valueType == INTEGER){
+			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.intValue);
+		}
+		if(tmpExpression->valueType == DECIMAL){
+			printf("Decimal %s set to %f.\n", node->name, tmpExpression->value.decimalValue);
+		}
+		if(tmpExpression->valueType == BOOLEAN){
+			if(tmpExpression->value.intValue){
 				printf("Boolean %s set to True.\n", node->name);
 			} else {
 				printf("Boolean %s set to False.\n", node->name);
@@ -190,6 +287,7 @@ struct Node* replRead(struct Node *parent, char lineStart){
 	char input[1024];
 
 	printf("%c", lineStart);
+	input[0] = 0;
 	fgets(input, sizeof(input), stdin);
 	input[strcspn(input, "\n")] = 0;
 
@@ -245,6 +343,7 @@ struct Node* replRead(struct Node *parent, char lineStart){
 			return NULL;
 		}
 		printf("%c", lineStart);
+		input[0] = 0;
 		fgets(input, sizeof(input), stdin);
 		input[strcspn(input, "\n")] = 0;
 	}
@@ -275,6 +374,9 @@ int main(int argc, char **argv) {
 	variables = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
 	functions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
 
+	eval(parse("function print ( Integer i ) :"), variables, functions);
+	eval(parse("function printline ( Integer i ) :"), variables, functions);
+
 	struct Node *program = malloc(sizeof(struct Node));
 	program->nodeType = STATEMENTS_NODE;
 	program->indentation = -1;
@@ -292,7 +394,7 @@ int main(int argc, char **argv) {
 
 			replRead(program, '>');
 
-			replPrint(program, variables, functions);
+			replPrint(program->body->data, variables, functions);
 
 			/*fgets(input, sizeof(input), stdin);
 			input[strcspn(input, "\n")] = 0;

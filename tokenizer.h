@@ -189,6 +189,10 @@ int tokenize(char src[], struct Token tokens[]){
             continue;
         }
 
+        if(match(src, "//", NULL, 0)){
+            break;
+        }
+
         if(match(src, "True", NULL, 0)){
             tokens[token_i++].tokenType = TRUE_TOKEN;
             continue;
@@ -241,6 +245,10 @@ int tokenize(char src[], struct Token tokens[]){
         }
         if(match(src, ".", NULL, 0)){
             tokens[token_i++].tokenType = DOT_TOKEN;
+            continue;
+        }
+        if(match(src, ",", NULL, 0)){
+            tokens[token_i++].tokenType = COMA_TOKEN;
             continue;
         }
         if(match(src, "(", NULL, 0)){

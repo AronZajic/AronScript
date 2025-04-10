@@ -1,4 +1,4 @@
-function funName ():
+function funName () -> Integer:
 	return 15
 
 function funName2 ( Integer x ) -> Integer:
@@ -9,9 +9,9 @@ function funName3 () -> Integer :
 
 printline(funName() + funName2(2) + funName3() + funName2(3))
 
-function testRet ():
+function testRet () -> Integer:
 	if 1 > 2:
 		return 5
 	return 6
 
-testRet()
+printline(testRet())
