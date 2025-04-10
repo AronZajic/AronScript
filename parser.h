@@ -581,6 +581,50 @@ struct Node* booleanDeclaration() {
     return e;
 }
 
+enum ValueType type(){
+
+    //struct Node *e = malloc(sizeof(struct Node));
+
+    switch (peek().tokenType)
+    {
+    case INTEGER_TOKEN:
+        integer();
+        return INTEGER;
+    case DECIMAL_TOKEN:
+        decimal();
+        return DECIMAL;
+    case BOOLEAN_TOKEN:
+        boolean();
+        return BOOLEAN;
+    default:
+        wrongTokenPrint("TYPE", peek());
+        return NULL_TYPE_VALUE;
+    }
+}
+
+struct Node* declaration(){
+
+    struct Node *e = malloc(sizeof(struct Node));
+
+    switch (peek().tokenType)
+    {
+    case INTEGER_TOKEN:
+        e = integerDeclaration();
+        break;
+    case DECIMAL_TOKEN:
+        e = decimalDeclaration();
+        break;
+    case BOOLEAN_TOKEN:
+        e = booleanDeclaration();
+        break;
+    default:
+        wrongTokenPrint("DECLARATION", peek());
+        e = NULL;
+        break;
+    }
+
+    return e;
+}
 
 struct Node* coma(){
     struct Token token = eat();
@@ -656,21 +700,20 @@ struct Node* functionDeclaration() {
     leftP();
 
 	if(peek().tokenType != RIGHT_P_TOKEN){
-		e->arguments = g_list_append(e->arguments, integerDeclaration());
+		e->arguments = g_list_append(e->arguments, declaration());
 	}
 
 	while (peek().tokenType != RIGHT_P_TOKEN)
     {	
 		coma();
-        e->arguments = g_list_append(e->arguments, integerDeclaration());
+        e->arguments = g_list_append(e->arguments, declaration());
     }
 
     rightP();
 
     if(peek().tokenType == ARROW_TOKEN){
         eat();
-        integer();
-        e->retutnType = INTEGER;
+        e->retutnType = type();
     }
 
     colon();
