@@ -17,6 +17,11 @@ struct EvalNode {
 	union Value value;
 };
 
+struct Context {
+	struct Context *parent;
+	GHashTable *variables;
+	GHashTable *functions;
+}
 
 struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable *contextFunctions){
 
@@ -122,6 +127,7 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 			i++;
 		}
 
+		// Todo check for null eval type
 		if(strcmp(node->name, "printLine") == 0){
 			printf("%d\n", eval((struct Node*)node->arguments->data, contextVariables, contextFunctions).value.intValue);
 			g_hash_table_destroy(contextVariablesInFunction);
@@ -325,6 +331,8 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
 		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
 
+		// TODO check for null eval type
+
 		if(tmpExpression->valueType != node->valueType){
 			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->valueType, tmpExpression->valueType);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
@@ -343,6 +351,8 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
 		*tmpExpression = eval(node->expression, contextVariables, contextFunctions);
+
+		// TODO check for null eval type
 
 		struct EvalNode *tmpVariable = g_hash_table_lookup(contextVariables, node->name);
 
