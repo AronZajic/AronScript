@@ -31,7 +31,9 @@ enum TokenType {
     ELSE_TOKEN = 'e',
     TRUE_TOKEN = 't',
     FALSE_TOKEN = 'a',
-    NOT_TOKEN = 'O'
+    NOT_TOKEN = 'O',
+    BREAK_TOKEN = 'r',
+    CONTINUE_TOKEN = 'c'
 };
 
 struct Token {
@@ -241,6 +243,14 @@ int tokenize(char src[], struct Token tokens[]){
         }
         if(match(src, "not", NULL, 0)){
             tokens[token_i++].tokenType = NOT_TOKEN;
+            continue;
+        }
+        if(match(src, "break", NULL, 0)){
+            tokens[token_i++].tokenType = BREAK_TOKEN;
+            continue;
+        }
+        if(match(src, "continue", NULL, 0)){
+            tokens[token_i++].tokenType = CONTINUE_TOKEN;
             continue;
         }
 

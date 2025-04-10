@@ -58,6 +58,42 @@ struct Node* integerValue() {
     return node;
 }
 
+struct Node* breakNode() {
+
+    //printf("Parsing number\n");
+
+    struct Token token = eat();
+
+    if(token.tokenType != BREAK_TOKEN){
+        wrongTokenPrint("BREAK", token);
+        return NULL;
+    }
+
+    struct Node* node = malloc(sizeof(struct Node));
+
+    node->nodeType = BREAK_NODE;
+
+    return node;
+}
+
+struct Node* continueNode() {
+
+    //printf("Parsing number\n");
+
+    struct Token token = eat();
+
+    if(token.tokenType != CONTINUE_TOKEN){
+        wrongTokenPrint("CONTINUE", token);
+        return NULL;
+    }
+
+    struct Node* node = malloc(sizeof(struct Node));
+
+    node->nodeType = CONTINUE_NODE;
+
+    return node;
+}
+
 struct Node* dot(){
     struct Token token = eat();
 
@@ -733,6 +769,12 @@ struct Node* statement() {
         break;
     case RETURN_TOKEN:
         e = returnDescend();
+        break;
+    case BREAK_TOKEN:
+        e = breakNode();
+        break;
+    case CONTINUE_TOKEN:
+        e = continueNode();
         break;
     default:
         fprintf(stderr, "Could not parse statement at %c %p.\n", peek().tokenType, peek().value);
