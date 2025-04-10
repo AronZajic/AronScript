@@ -202,8 +202,20 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 				result.value.intValue = left.value.intValue > right.value.intValue;
 				result.valueType = BOOLEAN;
 				break;
+			case '7':
+				result.value.intValue = left.value.intValue >= right.value.intValue;
+				result.valueType = BOOLEAN;
+				break;
+			case '4':
+				result.value.intValue = left.value.intValue <= right.value.intValue;
+				result.valueType = BOOLEAN;
+				break;
 			case 'Q':
 				result.value.intValue = left.value.intValue == right.value.intValue;
+				result.valueType = BOOLEAN;
+				break;
+			case '!':
+				result.value.intValue = left.value.intValue != right.value.intValue;
 				result.valueType = BOOLEAN;
 				break;
 			default:
@@ -236,8 +248,20 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 				result.value.intValue = left.value.decimalValue > right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
+			case '7':
+				result.value.intValue = left.value.decimalValue >= right.value.decimalValue;
+				result.valueType = BOOLEAN;
+				break;
+			case '4':
+				result.value.intValue = left.value.decimalValue <= right.value.decimalValue;
+				result.valueType = BOOLEAN;
+				break;
 			case 'Q':
 				result.value.intValue = left.value.decimalValue == right.value.decimalValue;
+				result.valueType = BOOLEAN;
+				break;
+			case '!':
+				result.value.intValue = left.value.decimalValue != right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
 			default:
@@ -253,6 +277,9 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 			case 'Q':
 				result.value.intValue = left.value.intValue == right.value.intValue;
 				break;
+			case '!':
+				result.value.intValue = left.value.intValue == right.value.intValue;
+				break;
 			case '&':
 				result.value.intValue = left.value.intValue && right.value.intValue;
 				break;
@@ -261,11 +288,13 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 				break;
 			case '<':
 			case '>':
+			case '7':
+			case '4':
 			case '+':
 			case '-':
 			case '*':
 			case '/':
-				fprintf(stderr, "BOOLEAN types do not support aritmetic operations, > and <.\n");
+				fprintf(stderr, "BOOLEAN types do not support <, >, <=, >= and aritmetic operations.\n");
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 				break;
 			default:

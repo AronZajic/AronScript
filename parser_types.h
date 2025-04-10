@@ -12,8 +12,11 @@ enum BinaryOperation {
     LESS_THAN = '<',
     GREATER_THAN = '>',
     EQUALS = 'Q',
+    NOT_EQUALS = '!',
     AND = '&',
-    OR = '|'
+    OR = '|',
+    LESS_THAN_EQUAL = '4',
+    GREATER_THAN_EQUAL = '7',
 };
 
 enum NodeType {

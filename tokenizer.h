@@ -287,6 +287,27 @@ int tokenize(char src[], struct Token tokens[]){
             token_i++;
             continue;
         }
+        if(match(src, "!=", NULL, 0)){
+            tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
+            tokens[token_i].presedence = 1;
+            tokens[token_i].value[0] = '!';
+            token_i++;
+            continue;
+        }
+        if(match(src, "<=", NULL, 0)){
+            tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
+            tokens[token_i].presedence = 1;
+            tokens[token_i].value[0] = '4';
+            token_i++;
+            continue;
+        }
+        if(match(src, ">=", NULL, 0)){
+            tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
+            tokens[token_i].presedence = 1;
+            tokens[token_i].value[0] = '7';
+            token_i++;
+            continue;
+        }
         if(match(src, "<", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
