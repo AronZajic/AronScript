@@ -1,36 +1,46 @@
-<statement> ::= <single_line_stmt> | <multi_line_stmt> |
-<FunctionDef> | <If> | <While>
+<statement> ::= <expression> <NEWLINE> | <declare> | <assign> | <if> | <while> | "break" <NEWLINE> | "continue" <NEWLINE> | <functionDefinition> | <return> | <include>
+
 <functionDefinition> ::= 
-"function" <name> "(" <params>? ")" ":" <block> |
-"function" <name> "(" <params>? ")" -> <type> ":" <block>
+	"function" <name> "(" <params>? ")" ":" <block> |
+	"function" <name> "(" <params>? ")" -> <type> ":" <block>
+
 <params> ::= <type> <name> ("," <type> <name>)*
+
 <block> ::= <NEWLINE> <INDENT> <statement>* <DEDENT>
-| <single_line_stmt>
+
 <if> ::= "if" <expression> ":" <block> <else>?
+
 <else> ::= "else" ":" <block>
+
 <while> ::= "while" <expression> ":" <block>
-<single_line_stmt> ::= <break> | <continue> | <return>
-| <assign> | <expression> | <include>
+
 <include> ::= "include" <STRING> <NEWLINE>
+
 <return> ::= "return" <expression> <NEWLINE>
-<declare> ::= <type> <name> | <type> <name> "=" <expression>
-<assign> ::= <name> "=" <expression>
+
+<declare> ::= <type> <name> <NEWLINE> | <type> <name> "=" <expression> <NEWLINE>
+
+<assign> ::= <name> "=" <expression> <NEWLINE>
+
 <expression> ::= <value> | "(" <expression> ")" |
-<expression> "<" <expression>  |
-<expression> ">" <expression>  |
-<expression> "<=" <expression> |
-<expression> ">=" <expression> |
-<expression> "==" <expression> |
-<expression> "!=" <expression> |
-<expression> "+"  <expression> |
-<expression> "-"  <expression> |
-<expression> "*"  <expression> |
-<expression> "/"  <expression> |
-<expression> "and"<expression> |
-<expression> "or" <expression> |
-"not" <expression>
+	<expression> "<" <expression>  |
+	<expression> ">" <expression>  |
+	<expression> "<=" <expression> |
+	<expression> ">=" <expression> |
+	<expression> "==" <expression> |
+	<expression> "!=" <expression> |
+	<expression> "+"  <expression> |
+	<expression> "-"  <expression> |
+	<expression> "*"  <expression> |
+	<expression> "/"  <expression> |
+	<expression> "and"<expression> |
+	<expression> "or" <expression> |
+	"not" <expression>
+
 <functionCall> ::= <name> "(" <arguments>  ")"
+
 <arguments> ::= <expression> ("," <expression>)*
+
 <value> ::= <NUMBER> 
 | <name>
 | "True" 
@@ -38,7 +48,11 @@
 | "Null" 
 | <list>
 | <functionCall> 
+
 <type> ::= "Integer" | "Float" | "Boolean" | "Character" | <listType>
+
 <listType> ::= "List" "<" <type> ">"
+
 <list> ::= "[" <values>? "]"
+
 <values> ::=  <expression> ("," <expression>)*
