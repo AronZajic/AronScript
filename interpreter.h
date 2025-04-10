@@ -383,18 +383,30 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 	if(node->nodeType == IF_NODE){
 
 		if(eval(node->condition, contextVariables, contextFunctions).value.intValue){
-			for (GList *listIterator = node->left->body; listIterator != NULL; listIterator = listIterator->next) {
+			/*for (GList *listIterator = node->left->body; listIterator != NULL; listIterator = listIterator->next) {
 				struct EvalNode evalNodeTmp = eval(listIterator->data, contextVariables, contextFunctions);
 				if(evalNodeTmp.evalType == BREAK_TYPE || evalNodeTmp.evalType == CONTINUE_TYPE || evalNodeTmp.evalType == RETURN_TYPE){
 					return evalNodeTmp;
 				}
-			}
+			}*/
+			return eval(node->left, contextVariables, contextFunctions);
 		} else if(node->right != NULL) {
-			for (GList *listIterator = node->right->body; listIterator != NULL; listIterator = listIterator->next) {
+			/*for (GList *listIterator = node->right->body; listIterator != NULL; listIterator = listIterator->next) {
 				struct EvalNode evalNodeTmp = eval(listIterator->data, contextVariables, contextFunctions);
 				if(evalNodeTmp.evalType == BREAK_TYPE || evalNodeTmp.evalType == CONTINUE_TYPE || evalNodeTmp.evalType == RETURN_TYPE){
 					return evalNodeTmp;
 				}
+			}*/
+			return eval(node->right, contextVariables, contextFunctions);
+		}
+		return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+	}
+
+	if(node->nodeType == STATEMENTS_NODE){
+		for (GList *listIterator = node->body; listIterator != NULL; listIterator = listIterator->next) {
+			struct EvalNode evalNodeTmp = eval(listIterator->data, contextVariables, contextFunctions);
+			if(evalNodeTmp.evalType == BREAK_TYPE || evalNodeTmp.evalType == CONTINUE_TYPE || evalNodeTmp.evalType == RETURN_TYPE){
+				return evalNodeTmp;
 			}
 		}
 		return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};

@@ -34,6 +34,7 @@ enum NodeType {
     FUNCTION_CALL_NODE = 'C',
     IF_NODE = 'I',
     ELSE_NODE = 'e',
+    ELSE_IF_NODE = 'i',
     NOT_NODE = 'O',
     BREAK_NODE = 'b',
     CONTINUE_NODE = 'c'

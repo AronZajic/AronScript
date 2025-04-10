@@ -18,6 +18,8 @@ enum TokenType {
     LIST_TOKEN = 'L',
     FUNCTION_TOKEN = 'f',
     IF_TOKEN = 'i',
+    ELSE_TOKEN = 'e',
+    ELSE_IF_TOKEN = 'o',
     STRUCT_TOKEN = 'S',
     NAME_TOKEN = 'A',
     ASIGN_TOKEN = '=',
@@ -28,7 +30,6 @@ enum TokenType {
     FUNCTION_CALL_TOKEN = 'C',
     COMA_TOKEN = ',',
     DOT_TOKEN = '.',
-    ELSE_TOKEN = 'e',
     TRUE_TOKEN = 't',
     FALSE_TOKEN = 'a',
     NOT_TOKEN = 'O',
@@ -219,6 +220,10 @@ int tokenize(char src[], struct Token tokens[]){
         }
         if(match(src, "if", " ", 0)){
             tokens[token_i++].tokenType = IF_TOKEN;
+            continue;
+        }
+        if(match(src, "elseIf", " :", 0)){
+            tokens[token_i++].tokenType = ELSE_IF_TOKEN;
             continue;
         }
         if(match(src, "else", " :", 0)){

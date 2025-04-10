@@ -429,6 +429,23 @@ struct Node* ifDescend() {
     return e;
 }
 
+struct Node* elseIfDescend() {
+    struct Token token = eat();
+
+    if(token.tokenType != ELSE_IF_TOKEN){
+        wrongTokenPrint("ELSE IF", token);
+        return NULL;
+    }
+
+	struct Node *e = malloc(sizeof(struct Node));
+    e->nodeType = ELSE_IF_NODE;
+
+    e->condition = expression();
+	colon();
+
+    return e;
+}
+
 struct Node* elseDescend() {
     struct Token token = eat();
 
@@ -803,6 +820,9 @@ struct Node* statement() {
         break;
 	case ELSE_TOKEN:
         e = elseDescend();
+        break;
+    case ELSE_IF_TOKEN:
+        e = elseIfDescend();
         break;
     case WHILE_TOKEN:
         e = whileDescend();

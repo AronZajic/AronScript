@@ -259,18 +259,31 @@ struct Node* read_file(FILE *file, struct Node *parent){
 				node->left->indentation = node->indentation;
 				node->left->nodeType = STATEMENTS_NODE;
 				node->left->body = NULL;
+				node->right = NULL;
 
 				struct Node* tmp = read_file(file, node->left);
+				struct Node* tmpDescend = node;
+
+				while(tmp != NULL && tmp->nodeType == ELSE_IF_NODE){
+					tmpDescend->right = tmp;
+					tmpDescend->right->nodeType = IF_NODE;
+
+					tmpDescend->right->left = malloc(sizeof(struct Node));
+					tmpDescend->right->left->indentation = tmpDescend->indentation;
+					tmpDescend->right->left->nodeType = STATEMENTS_NODE;
+					tmpDescend->right->left->body = NULL;
+
+					tmp = read_file(file, tmpDescend->right->left);
+					tmpDescend = tmpDescend->right;
+				}
 
 				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
-					node->right = malloc(sizeof(struct Node));
-					node->right->indentation = node->indentation;
-					node->right->nodeType = STATEMENTS_NODE;
-					node->right->body = NULL;
+					tmpDescend->right = malloc(sizeof(struct Node));
+					tmpDescend->right->indentation = node->indentation;
+					tmpDescend->right->nodeType = STATEMENTS_NODE;
+					tmpDescend->right->body = NULL;
 
-					tmp = read_file(file, node->right);
-				} else {
-					node->right = NULL;
+					tmp = read_file(file, tmpDescend->right);
 				}
 				node = tmp;
 				goto placeNode;
@@ -356,7 +369,7 @@ void treeprint(struct Node *root, int level){
 	for (int i = 0; i < level; i++)
 			printf("  ");
 	printf("%c %d %c\n", root->nodeType, root->value.intValue, root->binaryOperation);
-	if(root->nodeType == BINARY_OPERATION_NODE){
+	if(root->nodeType == BINARY_OPERATION_NODE || root->nodeType == IF_NODE){
 		treeprint(root->left, level + 1);
 		treeprint(root->right, level + 1);
 	} else if(root->nodeType == WHILE_NODE || root->nodeType == STATEMENTS_NODE || root->nodeType == FUNCTION_DECLARATION_NODE){
