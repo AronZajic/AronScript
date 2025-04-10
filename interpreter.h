@@ -218,7 +218,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
 		}
 
-		for (GList *listIterator = functionDefinition->body; listIterator != NULL; listIterator = listIterator->next) {
+		/*for (GList *listIterator = functionDefinition->body; listIterator != NULL; listIterator = listIterator->next) {
 			
 			struct Node* statement = listIterator->data;
 			
@@ -233,6 +233,18 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 
 				return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=functionDefinition->retutnType, .value.intValue=evalNodeTmp.value.intValue};
 			}
+		}*/
+
+		struct EvalNode evalNodeTmp = eval(functionDefinition->statements, &contextInFunction);
+		if(evalNodeTmp.evalType == RETURN_TYPE){
+			g_hash_table_destroy(contextInFunction.variables);
+			g_hash_table_destroy(contextInFunction.functions);
+
+			if(evalNodeTmp.valueType != functionDefinition->retutnType){
+				fprintf(stderr, "Wrong return type %c. Function \"%s\" return type %c.\n", evalNodeTmp.valueType, node->name, functionDefinition->retutnType);
+			}
+
+			return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=functionDefinition->retutnType, .value.intValue=evalNodeTmp.value.intValue};
 		}
 
 		g_hash_table_destroy(contextInFunction.variables);
