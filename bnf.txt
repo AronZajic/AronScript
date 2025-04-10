@@ -8,7 +8,9 @@
 
 <block> ::= <NEWLINE> <INDENT> <statement>* <DEDENT>
 
-<if> ::= "if" <expression> ":" <block> <else>?
+<if> ::= "if" <expression> ":" <block> <elseIf>? <else>?
+
+<elseIf> ::= "elseIf" <expression> ":" <block> <elseIf>
 
 <else> ::= "else" ":" <block>
 
