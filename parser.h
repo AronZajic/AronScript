@@ -548,7 +548,7 @@ struct Node* functionDeclaration() {
     e->nodeType = FUNCTION_DECLARATION_NODE;
     e->body = NULL;
     e->arguments = NULL;
-    e->retutnType = NULL;
+    e->retutnType = NULL_TYPE_VALUE;
 
     if(peek().tokenType == NAME_TOKEN){
         e->name = name();

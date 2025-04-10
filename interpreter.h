@@ -96,7 +96,7 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 			i++;
 		}
 
-		if(strcmp(node->name, "printline") == 0){
+		if(strcmp(node->name, "printLine") == 0){
 			printf("%d\n", eval((struct Node*)node->arguments->data, contextVariables, contextFunctions).value.intValue);
 			g_hash_table_destroy(contextVariablesInFunction);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};

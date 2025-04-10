@@ -1,5 +1,5 @@
 Integer x = 5
 
-printline(x)
+printLine(x)
 
 x

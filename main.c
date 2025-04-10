@@ -375,7 +375,7 @@ int main(int argc, char **argv) {
 	functions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
 
 	eval(parse("function print ( Integer i ) :"), variables, functions);
-	eval(parse("function printline ( Integer i ) :"), variables, functions);
+	eval(parse("function printLine ( Integer i ) :"), variables, functions);
 
 	struct Node *program = malloc(sizeof(struct Node));
 	program->nodeType = STATEMENTS_NODE;

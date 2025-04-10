@@ -36,6 +36,7 @@ enum ValueType {
     DECIMAL = 'D',
     BOOLEAN = 'B',
     LIST = 'L',
+    NULL_TYPE_VALUE = 'N'
 };
 
 /*struct Parameter {
