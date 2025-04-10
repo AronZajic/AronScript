@@ -71,7 +71,7 @@ int replPrint(struct Node* node, GHashTable *contextVariables, GHashTable *conte
 		eval(node, contextVariables, contextFunctions);
 	}*/
 
-	if(node->nodeType == VALUE_NODE || node->nodeType == BINARY_OPERATION_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE){
+	if(node->nodeType == VALUE_NODE || node->nodeType == BINARY_OPERATION_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE || node->nodeType == NOT_NODE){
 
 		//tmp = eval(node, contextVariables, contextFunctions).value.intValue;
 
@@ -394,7 +394,8 @@ int main(int argc, char **argv) {
 
 			replRead(program, '>');
 
-			replPrint(program->body->data, variables, functions);
+			if(g_list_length(program->body) != 0)
+				replPrint(program->body->data, variables, functions);
 
 			/*fgets(input, sizeof(input), stdin);
 			input[strcspn(input, "\n")] = 0;

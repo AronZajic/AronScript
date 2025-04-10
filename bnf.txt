@@ -1,8 +1,8 @@
 <statement> ::= <single_line_stmt> | <multi_line_stmt> |
 <FunctionDef> | <If> | <While>
 <functionDefinition> ::= 
-"function" <name> "(" <params> ? ")" ":" <block> |
-"function" <name> "(" <params> ? ")" -> <type> ":" <block>
+"function" <name> "(" <params>? ")" ":" <block> |
+"function" <name> "(" <params>? ")" -> <type> ":" <block>
 <params> ::= <type> <name> ("," <type> <name>)*
 <block> ::= <NEWLINE> <INDENT> <statement>* <DEDENT>
 | <single_line_stmt>
@@ -15,7 +15,7 @@
 <return> ::= "return" <expression> <NEWLINE>
 <declare> ::= <type> <name> | <type> <name> "=" <expression>
 <assign> ::= <name> "=" <expression>
-<expression> ::= <value> | <variable> | "(" <expression> ")" |
+<expression> ::= <value> | "(" <expression> ")" |
 <expression> "<" <expression>  |
 <expression> ">" <expression>  |
 <expression> "<=" <expression> |
@@ -29,16 +29,16 @@
 <expression> "and"<expression> |
 <expression> "or" <expression> |
 "not" <expression>
-<functionCall> ::= 
-<name> "(" <arguments>  ")"
+<functionCall> ::= <name> "(" <arguments>  ")"
 <arguments> ::= <expression> ("," <expression>)*
 <value> ::= <NUMBER> 
-| <name> 
+| <name>
 | "True" 
 | "False" 
 | "Null" 
-| <list> 
+| <list>
+| <functionCall> 
 <type> ::= "Integer" | "Float" | "Boolean" | "Character" | <listType>
 <listType> ::= "List" "<" <type> ">"
 <list> ::= "[" <values>? "]"
-<values> ::= <value>*
+<values> ::=  <expression> ("," <expression>)*

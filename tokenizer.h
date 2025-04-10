@@ -30,7 +30,8 @@ enum TokenType {
     DOT_TOKEN = '.',
     ELSE_TOKEN = 'e',
     TRUE_TOKEN = 't',
-    FALSE_TOKEN = 'a'
+    FALSE_TOKEN = 'a',
+    NOT_TOKEN = 'O'
 };
 
 struct Token {
@@ -238,6 +239,10 @@ int tokenize(char src[], struct Token tokens[]){
             tokens[token_i++].tokenType = ARROW_TOKEN;
             continue;
         }
+        if(match(src, "not", NULL, 0)){
+            tokens[token_i++].tokenType = NOT_TOKEN;
+            continue;
+        }
 
         if(match(src, ":", NULL, 0)){
             tokens[token_i++].tokenType = COLON_TOKEN;
@@ -257,6 +262,21 @@ int tokenize(char src[], struct Token tokens[]){
         }
         if(match(src, ")", NULL, 0)){
             tokens[token_i++].tokenType = RIGHT_P_TOKEN;
+            continue;
+        }
+
+        if(match(src, "or", NULL, 0)){
+            tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
+            tokens[token_i].presedence = -1;
+            tokens[token_i].value[0] = '|';
+            token_i++;
+            continue;
+        }
+        if(match(src, "and", NULL, 0)){
+            tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
+            tokens[token_i].presedence = 0;
+            tokens[token_i].value[0] = '&';
+            token_i++;
             continue;
         }
 

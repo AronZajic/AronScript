@@ -11,7 +11,9 @@ enum BinaryOperation {
     DIVIDE = '/',
     LESS_THAN = '<',
     GREATER_THAN = '>',
-    EQUALS = 'Q'
+    EQUALS = 'Q',
+    AND = '&',
+    OR = '|'
 };
 
 enum NodeType {
@@ -28,7 +30,8 @@ enum NodeType {
     RETURN_NODE = 'R',
     FUNCTION_CALL_NODE = 'C',
     IF_NODE = 'I',
-    ELSE_NODE = 'e'
+    ELSE_NODE = 'e',
+    NOT_NODE = 'O'
 };
 
 enum ValueType {

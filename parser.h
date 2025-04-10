@@ -191,6 +191,55 @@ struct Node* rightP() {
 }
 
 struct Node* functionCall();
+struct Node* expression();
+
+struct Node* negation() {
+
+    //printf("Parsing rightP\n");
+
+    struct Token token = eat();
+
+    if(token.tokenType != NOT_TOKEN){
+        wrongTokenPrint("NOT", token);
+    }
+
+    struct Node *e = malloc(sizeof(struct Node));
+    e->nodeType = NOT_NODE;
+
+    switch (peek().tokenType)
+    {
+    case INTEGER_VALUE_TOKEN:
+        fprintf(stderr, "Integer value can not be negated.");
+        return NULL;
+    case DECIMAL_VALUE_TOKEN:
+        fprintf(stderr, "Decimal value can not be negated.");
+        return NULL;
+    case TRUE_TOKEN:
+    case FALSE_TOKEN:
+        e->expression = booleanValue();
+        break;
+    case NAME_TOKEN:
+        e->expression = variable();
+        break;
+    case FUNCTION_CALL_TOKEN:
+        e->expression = functionCall();
+		break;
+    case LEFT_P_TOKEN:
+        leftP();
+        e->expression = expression();
+        rightP();
+        break;
+    case NOT_TOKEN:
+        e->expression = negation();
+        break;
+    default:
+        fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
+        return NULL;
+    }
+
+    return e;
+}
+
 struct Node* handle_infix(struct Node* tmp);
 
 struct Node* expression() {
@@ -254,6 +303,10 @@ struct Node* expression() {
         e = handle_infix(tmp);
 
         break;
+    case NOT_TOKEN:
+        tmp = negation();
+        e = handle_infix(tmp);
+        break;
     default:
         fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
         break;
@@ -284,6 +337,9 @@ void infix_helper(struct Node* dest){
         leftP();
         dest->right = expression();
         rightP();
+        break;
+    case NOT_TOKEN:
+        dest->right = negation();
         break;
     default:
 		fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
@@ -638,6 +694,7 @@ struct Node* statement() {
     case LEFT_P_TOKEN:
     case BINARY_OPERATION_TOKEN:
 	case FUNCTION_CALL_TOKEN:
+    case NOT_TOKEN:
         e = expression();
         break;
     case INTEGER_TOKEN:

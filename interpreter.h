@@ -37,6 +37,22 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 		return *tmp;
 	}
 
+	if(node->nodeType == NOT_NODE){
+		struct EvalNode tmp = eval(node->expression, contextVariables, contextFunctions);
+
+		if(tmp.evalType == NULL_TYPE){
+			fprintf(stderr, "Got NULL value as input to not.\n");
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+
+		if(tmp.valueType != BOOLEAN){
+			fprintf(stderr, "Got %c type as input to not. Input to not has to be Boolean.\n", tmp.valueType);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.intValue=0};
+		}
+
+		return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=BOOLEAN, .value.intValue=!tmp.value.intValue};
+	}
+
 	if(node->nodeType == FUNCTION_DECLARATION_NODE){
 		if(g_hash_table_contains(contextFunctions, node->name)){
 			fprintf(stderr, "Function %s already defined.\n", node->name);
@@ -236,6 +252,12 @@ struct EvalNode eval(struct Node* node, GHashTable *contextVariables, GHashTable
 			{
 			case 'Q':
 				result.value.intValue = left.value.intValue == right.value.intValue;
+				break;
+			case '&':
+				result.value.intValue = left.value.intValue && right.value.intValue;
+				break;
+			case '|':
+				result.value.intValue = left.value.intValue || right.value.intValue;
 				break;
 			case '<':
 			case '>':
