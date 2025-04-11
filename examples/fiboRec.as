@@ -5,4 +5,4 @@ function fibo (Integer number) -> Integer:
 	else:
 		return fibo(number - 1) + fibo(number - 2)
 
-fibo(10)
+printLine(fibo(10))
