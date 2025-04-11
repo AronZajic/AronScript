@@ -222,7 +222,7 @@ int tokenize(char src[], struct Token tokens[]){
             tokens[token_i++].tokenType = IF_TOKEN;
             continue;
         }
-        if(match(src, "elseIf", " :", 0)){
+        if(match(src, "elseIf", " ", 0)){
             tokens[token_i++].tokenType = ELSE_IF_TOKEN;
             continue;
         }
