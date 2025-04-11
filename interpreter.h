@@ -86,6 +86,88 @@ int contextInsertFunction(struct Context *context, char *name, struct Node *node
 	return 0;
 }
 
+void freeNode(void *n){
+
+	struct Node *node = n;
+
+	if(node == NULL){
+		free(node);
+		return;
+	}
+
+	if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
+		
+		if(node->nodeType == WHILE_NODE && node->condition != NULL)
+			freeNode(node->condition);
+
+		if(node->statements != NULL){
+			freeNode(node->statements);
+		}
+	}
+
+	if(node->nodeType == STATEMENTS_NODE){
+		for (GList *l = node->body; l != NULL; l = l->next) {
+			if(l->data != NULL)
+				freeNode(l->data);
+		}
+		g_list_free(node->body);
+	}
+
+	if(node->nodeType == BINARY_OPERATION_NODE){
+		freeNode(node->left);
+		freeNode(node->right);
+	}
+
+	if(node->nodeType == IF_NODE){
+		if(node->condition != NULL)
+			freeNode(node->condition);
+		if(node->left != NULL)
+			freeNode(node->left);
+		if(node->right != NULL)
+			freeNode(node->right);
+	}
+
+	if(node->nodeType == DEFINE_NODE || node->nodeType == ASIGN_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE){
+		free(node->name);
+	}
+
+	if(node->nodeType == ASIGN_NODE || node->nodeType == DEFINE_NODE){
+		freeNode(node->expression);
+	}
+
+	if(node->nodeType == FUNCTION_CALL_NODE){
+		for (GList *l = node->arguments; l != NULL; l = l->next) {
+			freeNode(l->data);
+		}
+		g_list_free(node->arguments);
+	}
+
+	if(node->nodeType == RETURN_NODE || node->nodeType == NOT_NODE){
+		if(node->expression != NULL)
+			freeNode(node->expression);
+	}
+
+	if(node->nodeType == FUNCTION_DECLARATION_NODE){
+		return;
+	}
+
+	free(node);
+}
+
+void freeFunctionDeclaration(void *n){
+	struct Node *node = n;
+	if(node->nodeType == FUNCTION_DECLARATION_NODE){
+		for (GList *l = node->arguments; l != NULL; l = l->next) {
+			freeNode(l->data);
+		}
+		g_list_free(node->arguments);
+	} else {
+		printf("Tried to free non function\n");
+	}
+	free(node->name);
+	free(n);
+}
+
 struct EvalNode evalWithFreshContext(struct Node* node, struct Context *context);
 
 struct EvalNode eval(struct Node* node, struct Context *context){
@@ -162,7 +244,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		int functionDefinitionArgsLen = g_list_length(functionDefinition->arguments);
 
 		GHashTable *contextVariablesInFunction = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
-		GHashTable *contextFunctionsInFunction = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
+		GHashTable *contextFunctionsInFunction = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, freeFunctionDeclaration);
 
 		struct Context contextInFunction;
 		contextInFunction.parent = context;
@@ -542,19 +624,19 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 }
 
 struct EvalNode evalWithFreshContext(struct Node* node, struct Context *context){
-	GHashTable *contextVariablesInWhile = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
-	GHashTable *contextFunctionsInWhile = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
+	GHashTable *contextVariablesNew = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
+	GHashTable *contextFunctionsNew = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, freeFunctionDeclaration);
 
-	struct Context *contextInWhile = malloc(sizeof(struct Context));
-	contextInWhile->parent = context;
-	contextInWhile->variables = contextVariablesInWhile;
-	contextInWhile->functions = contextFunctionsInWhile;
+	struct Context *contextNew = malloc(sizeof(struct Context));
+	contextNew->parent = context;
+	contextNew->variables = contextVariablesNew;
+	contextNew->functions = contextFunctionsNew;
 
-	struct EvalNode evalNodeTmp = eval(node, contextInWhile);
+	struct EvalNode evalNodeTmp = eval(node, contextNew);
 
-	g_hash_table_destroy(contextVariablesInWhile);
-	g_hash_table_destroy(contextFunctionsInWhile);
-	free(contextInWhile);
+	g_hash_table_destroy(contextVariablesNew);
+	g_hash_table_destroy(contextFunctionsNew);
+	free(contextNew);
 
 	return evalNodeTmp;
 }

@@ -621,7 +621,7 @@ enum ValueType type(){
 
 struct Node* declaration(){
 
-    struct Node *e = malloc(sizeof(struct Node));
+    struct Node *e;
 
     switch (peek().tokenType)
     {
@@ -699,7 +699,7 @@ struct Node* functionDeclaration() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = FUNCTION_DECLARATION_NODE;
-    e->body = NULL;
+    e->statements = NULL;
     e->arguments = NULL;
     e->retutnType = NULL_TYPE_VALUE;
 

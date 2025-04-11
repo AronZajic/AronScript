@@ -89,4 +89,7 @@ struct Node {
 
     // Type ASIGN and DEFINE
     //enum ValueType valueType;
+
+    // Type STATEMENTS
+    // GList* body;
 };

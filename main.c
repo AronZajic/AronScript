@@ -250,7 +250,9 @@ struct Node* read_file(FILE *file, struct Node *parent){
 
 			if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
 				node->statements = malloc(sizeof(struct Node));
+				node->statements->indentation = node->indentation;
 				node->statements->nodeType = STATEMENTS_NODE;
+				node->statements->body = NULL;
 				struct Node* tmp = read_file(file, node->statements);
 				node = tmp;
 				goto placeNode;
@@ -284,7 +286,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 					tmpDescend->right->indentation = node->indentation;
 					tmpDescend->right->nodeType = STATEMENTS_NODE;
 					tmpDescend->right->body = NULL;
-
+					free(tmp);
 					tmp = read_file(file, tmpDescend->right);
 				}
 				node = tmp;
@@ -375,7 +377,7 @@ void treeprint(struct Node *root, int level){
 		treeprint(root->left, level + 1);
 		treeprint(root->right, level + 1);
 	} else if(root->nodeType == WHILE_NODE || root->nodeType == STATEMENTS_NODE || root->nodeType == FUNCTION_DECLARATION_NODE){
-		for (GList *l = root->body; l != NULL; l = l->next) {
+		for (GList *l = root->statements->body; l != NULL; l = l->next) {
 			treeprint(l->data, level + 1);
 		}
 	}
@@ -387,7 +389,7 @@ int main(int argc, char **argv) {
 	GHashTable *functions;
 
 	variables = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
-	functions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
+	functions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, freeFunctionDeclaration);
 
 	struct Context *context = malloc(sizeof(struct Context));
 	context->parent = NULL;
@@ -459,12 +461,16 @@ int main(int argc, char **argv) {
 
 		//treeprint(program, 0);
 
-		replPrint(program, context);
-		//eval(program, context);
+		//replPrint(program, context);
+		eval(program, context);
 
+		fclose(file);
 	}
+
+	freeNode(program);
 		
 	g_hash_table_destroy(variables);
 	g_hash_table_destroy(functions);
+	free(context);
     exit(EXIT_SUCCESS);
 }
