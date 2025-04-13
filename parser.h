@@ -25,6 +25,7 @@ void wrongTokenPrint(char expected[], struct Token token){
 
     }*/
 	fprintf(stderr, "\nWrong token! %s token expected, got %c token at (%d).\n", expected, token.tokenType, token_i_parser-1);
+    exit(EXIT_FAILURE);
 }
 
 struct Node* colon(){
@@ -462,15 +463,15 @@ struct Node* elseDescend() {
     return e;
 }
 
-struct Node* end() {
+int end() {
     struct Token token = eat();
 
     if(token.tokenType != END_TOKEN){
         wrongTokenPrint("END", token);
-        return NULL;
+        return 0;
     }
 
-    return NULL;
+    return 1;
 }
 
 struct Node* asign(){
@@ -841,6 +842,7 @@ struct Node* statement() {
         break;
     default:
         fprintf(stderr, "Could not parse statement at %c %p.\n", peek().tokenType, peek().value);
+        e = NULL;
         break;
     }
 
@@ -891,9 +893,8 @@ struct Node* parse(char* src){
     }
 
     struct Node* e = statement();
-    if(e != NULL)
-        end();
-    else{
+
+    if(!(e != NULL && end())){
         fprintf(stderr, "\nParsing not succesfull.\n");
         return NULL;
     }

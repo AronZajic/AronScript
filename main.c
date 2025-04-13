@@ -297,13 +297,13 @@ struct Node* read_file(FILE *file, struct Node *parent){
 	return NULL;   
 }
 
-struct Node* replRead(struct Node *parent, char lineStart){
+struct Node* replRead(struct Node *parent, char lineStart[]){
 
 	struct Node *node;
 
 	char input[1024];
 
-	printf("%c", lineStart);
+	printf("%s", lineStart);
 	input[0] = 0;
 	fgets(input, sizeof(input), stdin);
 	input[strcspn(input, "\n")] = 0;
@@ -329,7 +329,7 @@ struct Node* replRead(struct Node *parent, char lineStart){
 			}
 
 			if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
-				struct Node* tmp = replRead(node, ';');
+				struct Node* tmp = replRead(node, "·");
 				node = tmp;
 				goto placeNode;
 			}
@@ -340,7 +340,7 @@ struct Node* replRead(struct Node *parent, char lineStart){
 				node->left->nodeType = STATEMENTS_NODE;
 				node->left->body = NULL;
 
-				struct Node* tmp = replRead(node->left, ';');
+				struct Node* tmp = replRead(node->left, "·");
 
 				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
 					node->right = malloc(sizeof(struct Node));
@@ -348,7 +348,7 @@ struct Node* replRead(struct Node *parent, char lineStart){
 					node->right->nodeType = STATEMENTS_NODE;
 					node->right->body = NULL;
 
-					tmp = replRead(node->right, ';');
+					tmp = replRead(node->right, "·");
 				} else {
 					node->right = NULL;
 				}
@@ -356,10 +356,10 @@ struct Node* replRead(struct Node *parent, char lineStart){
 				goto placeNode;
 			}
 		}
-		if(lineStart == '>'){
+		if(strcmp(lineStart, ">") == 0){
 			return NULL;
 		}
-		printf("%c", lineStart);
+		printf("%s", lineStart);
 		input[0] = 0;
 		fgets(input, sizeof(input), stdin);
 		input[strcspn(input, "\n")] = 0;
@@ -414,7 +414,7 @@ int main(int argc, char **argv) {
 
 			program->body = NULL;
 
-			replRead(program, '>');
+			replRead(program, ">");
 
 			if(g_list_length(program->body) != 0)
 				replPrint(program->body->data, context);
