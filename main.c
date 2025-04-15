@@ -51,13 +51,13 @@ int replPrint(struct Node* node, struct Context *context){
 		if(didSomething){
 
 			if(evalNode.valueType == INTEGER){
-				printf("=%d\n", evalNode.value.intValue);
+				printf("=%d\n", evalNode.value.integerValue);
 			}
 			if(evalNode.valueType == DECIMAL){
 				printf("=%f\n", evalNode.value.decimalValue);
 			}
 			if(evalNode.valueType == BOOLEAN){
-				if(evalNode.value.intValue){
+				if(evalNode.value.integerValue){
 					printf("=True\n");
 				} else {
 					printf("=False\n");
@@ -73,7 +73,7 @@ int replPrint(struct Node* node, struct Context *context){
 
 	if(node->nodeType == VALUE_NODE || node->nodeType == BINARY_OPERATION_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE || node->nodeType == NOT_NODE){
 
-		//tmp = eval(node, contextVariables, contextFunctions).value.intValue;
+		//tmp = eval(node, contextVariables, contextFunctions).value.integerValue;
 
 		evalNode = eval(node, context);
 
@@ -85,13 +85,13 @@ int replPrint(struct Node* node, struct Context *context){
 		//printf("got type %c:", evalNode.valueType);
 
 		if(evalNode.valueType == INTEGER){
-			printf("=%d\n", evalNode.value.intValue);
+			printf("=%d\n", evalNode.value.integerValue);
 		}
 		if(evalNode.valueType == DECIMAL){
 			printf("=%f\n", evalNode.value.decimalValue);
 		}
 		if(evalNode.valueType == BOOLEAN){
-			if(evalNode.value.intValue){
+			if(evalNode.value.integerValue){
 				printf("=True\n");
 			} else {
 				printf("=False\n");
@@ -119,13 +119,13 @@ int replPrint(struct Node* node, struct Context *context){
 		tmp = g_hash_table_lookup(contextVariables, node->name);
 		
 		if(tmp->valueType == INTEGER){
-			printf("Integer %s set to %d.\n", node->name, tmp->value.intValue);
+			printf("Integer %s set to %d.\n", node->name, tmp->value.integerValue);
 		}
 		if(tmp->valueType == DECIMAL){
 			printf("Decimal %s set to %f.\n", node->name, tmp->value.decimalValue);
 		}
 		if(tmp->valueType == BOOLEAN){
-			if(tmp->value.intValue){
+			if(tmp->value.integerValue){
 				printf("Boolean %s set to True.\n", node->name);
 			} else {
 				printf("Boolean %s set to False.\n", node->name);
@@ -153,13 +153,13 @@ int replPrint(struct Node* node, struct Context *context){
 		g_hash_table_insert(context->variables, g_strdup(node->name), tmpExpression);
 
 		if(tmpExpression->valueType == INTEGER){
-			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.intValue);
+			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.integerValue);
 		}
 		if(tmpExpression->valueType == DECIMAL){
 			printf("Decimal %s set to %f.\n", node->name, tmpExpression->value.decimalValue);
 		}
 		if(tmpExpression->valueType == BOOLEAN){
-			if(tmpExpression->value.intValue){
+			if(tmpExpression->value.integerValue){
 				printf("Boolean %s set to True.\n", node->name);
 			} else {
 				printf("Boolean %s set to False.\n", node->name);
@@ -189,13 +189,13 @@ int replPrint(struct Node* node, struct Context *context){
 		g_hash_table_insert(context->variables, g_strdup(node->name), tmpExpression);
 
 		if(tmpExpression->valueType == INTEGER){
-			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.intValue);
+			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.integerValue);
 		}
 		if(tmpExpression->valueType == DECIMAL){
 			printf("Decimal %s set to %f.\n", node->name, tmpExpression->value.decimalValue);
 		}
 		if(tmpExpression->valueType == BOOLEAN){
-			if(tmpExpression->value.intValue){
+			if(tmpExpression->value.integerValue){
 				printf("Boolean %s set to True.\n", node->name);
 			} else {
 				printf("Boolean %s set to False.\n", node->name);
@@ -329,7 +329,7 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 			}
 
 			if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
-				struct Node* tmp = replRead(node, "·");
+				struct Node* tmp = replRead(node, ";");
 				node = tmp;
 				goto placeNode;
 			}
@@ -340,7 +340,7 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 				node->left->nodeType = STATEMENTS_NODE;
 				node->left->body = NULL;
 
-				struct Node* tmp = replRead(node->left, "·");
+				struct Node* tmp = replRead(node->left, ";");
 
 				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
 					node->right = malloc(sizeof(struct Node));
@@ -348,7 +348,7 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 					node->right->nodeType = STATEMENTS_NODE;
 					node->right->body = NULL;
 
-					tmp = replRead(node->right, "·");
+					tmp = replRead(node->right, ";");
 				} else {
 					node->right = NULL;
 				}
@@ -372,7 +372,7 @@ void treeprint(struct Node *root, int level){
 			return;
 	for (int i = 0; i < level; i++)
 			printf("  ");
-	printf("%c %d %c\n", root->nodeType, root->value.intValue, root->binaryOperation);
+	printf("%c %d %c\n", root->nodeType, root->value.integerValue, root->binaryOperation);
 	if(root->nodeType == BINARY_OPERATION_NODE || root->nodeType == IF_NODE){
 		treeprint(root->left, level + 1);
 		treeprint(root->right, level + 1);
@@ -396,8 +396,14 @@ int main(int argc, char **argv) {
 	context->variables = variables;
 	context->functions = functions;
 
-	eval(parse("function print ( Integer i ) :"), context);
-	eval(parse("function printLine ( Integer i ) :"), context);
+	eval(parse("function printInteger ( Integer i ) :"), context);
+	eval(parse("function printLineInteger ( Integer i ) :"), context);
+
+	eval(parse("function printDecimal ( Decimal d ) :"), context);
+	eval(parse("function printLineDecimal ( Decimal d ) :"), context);
+
+	eval(parse("function printBoolean ( Boolean b ) :"), context);
+	eval(parse("function printLineBoolean ( Boolean b ) :"), context);
 
 	struct Node *program = malloc(sizeof(struct Node));
 	program->nodeType = STATEMENTS_NODE;
@@ -406,11 +412,8 @@ int main(int argc, char **argv) {
 
 	if(argc == 1){
 
-		//char input[1024];
-
 		while (1)
 		{
-			//printf(">");
 
 			program->body = NULL;
 
@@ -418,31 +421,6 @@ int main(int argc, char **argv) {
 
 			if(g_list_length(program->body) != 0)
 				replPrint(program->body->data, context);
-
-			/*fgets(input, sizeof(input), stdin);
-			input[strcspn(input, "\n")] = 0;
-
-			//printf("$%s$", input);
-
-			struct Node *node = parse(input);
-			if(node != NULL){
-
-				if(
-					node->nodeType == FUNCTION_DECLARATION_NODE ||
-					node->nodeType == WHILE_NODE ||
-					node->nodeType == ELSE_NODE
-				) {
-					replRead(node);
-				}
-				if(node->nodeType == IF_NODE){
-					node->left = malloc(sizeof(struct Node));
-					node->left->indentation = node->indentation;
-					node->left->nodeType = STATEMENTS_NODE;
-					node->left->body = NULL;
-					replRead(node->left);
-				}
-				replPrint(node, variables, functions);->
-			}*/
 		}
 	} else {
 
@@ -455,14 +433,12 @@ int main(int argc, char **argv) {
             exit(EXIT_FAILURE);
         }
 
-		//char line[1024];
-
 		read_file(file, program);
 
 		//treeprint(program, 0);
 
-		//replPrint(program, context);
-		eval(program, context);
+		replPrint(program, context);
+		//eval(program, context);
 
 		fclose(file);
 	}

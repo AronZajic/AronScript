@@ -1,6 +1,6 @@
 union Value
 {
-	int intValue;
+	int integerValue;
 	float decimalValue;
 };
 
@@ -44,7 +44,6 @@ enum ValueType {
     INTEGER = 'I',
     DECIMAL = 'D',
     BOOLEAN = 'B',
-    LIST = 'L',
     NULL_TYPE_VALUE = 'N'
 };
 
@@ -69,27 +68,27 @@ struct Node {
 
     // Type VARIABLE
     char* name;
-    struct Node* expression;
-    //enum ValueType valueType;
+    // enum ValueType valueType;
+    // union Value value;
 
     // Type WHILE
     struct Node* condition;
-    GList* body;
     struct Node* statements;
 
     // Type FUNCTION_DECLARATION
     // char* name;
     enum ValueType retutnType;
-
-    // Type RETURN
-    // struct Node* expression;
-
-    // Type FUNCTION_CALL
     GList* arguments;
 
+    // Type RETURN
+    struct Node* expression;
+
+    // Type FUNCTION_CALL
+    // GList* arguments;
+
     // Type ASIGN and DEFINE
-    //enum ValueType valueType;
+    // enum ValueType valueType;
 
     // Type STATEMENTS
-    // GList* body;
+    GList* body;
 };

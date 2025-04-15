@@ -1,5 +1,11 @@
 Integer x = 5
 
-printLine(x)
+printLineInteger(x)
 
-x
+Decimal y = 2.2
+
+printLineDecimal(y)
+
+Boolean z = True
+
+printLineBoolean(z)

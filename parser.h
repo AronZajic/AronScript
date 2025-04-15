@@ -54,7 +54,7 @@ struct Node* integerValue() {
 
     node->nodeType = VALUE_NODE;
     node->valueType = INTEGER;
-    node->value.intValue = atoi(token.value);
+    node->value.integerValue = atoi(token.value);
 
     return node;
 }
@@ -153,9 +153,9 @@ struct Node* booleanValue() {
     node->valueType = BOOLEAN;
 
     if(token.tokenType == TRUE_TOKEN){
-        node->value.intValue = 1;
+        node->value.integerValue = 1;
     } else {
-        node->value.intValue = 0;
+        node->value.integerValue = 0;
     }
 
     return node;
@@ -335,7 +335,7 @@ struct Node* expression() {
 
         tmp = malloc(sizeof(struct Node));
         tmp->nodeType = VALUE_NODE;
-        tmp->value.intValue = 0;
+        tmp->value.integerValue = 0;
 
         e = handle_infix(tmp);
 
@@ -526,7 +526,7 @@ struct Node* integerDeclaration() {
     } else {
         e->expression = malloc(sizeof(struct Node));
         e->expression->nodeType = VALUE_NODE;
-        e->expression->value.intValue = 0;
+        e->expression->value.integerValue = 0;
         e->expression->valueType = INTEGER;
     }
 
@@ -559,7 +559,7 @@ struct Node* decimalDeclaration() {
     } else {
         e->expression = malloc(sizeof(struct Node));
         e->expression->nodeType = VALUE_NODE;
-        e->expression->value.intValue = 0;
+        e->expression->value.integerValue = 0;
         e->expression->valueType = DECIMAL;
     }
 
@@ -592,7 +592,7 @@ struct Node* booleanDeclaration() {
     } else {
         e->expression = malloc(sizeof(struct Node));
         e->expression->nodeType = VALUE_NODE;
-        e->expression->value.intValue = 0;
+        e->expression->value.integerValue = 0;
         e->expression->valueType = BOOLEAN;
     }
 

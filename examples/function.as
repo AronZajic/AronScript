@@ -7,11 +7,11 @@ function funName2 ( Integer x ) -> Integer:
 function funName3 () -> Integer :
 	return funName2(3) + funName2(2)
 
-printLine(funName() + funName2(2) + funName3() + funName2(3))
+printLineInteger(funName() + funName2(2) + funName3() + funName2(3))
 
 function testRet () -> Integer:
 	if 1 > 2:
 		return 5
 	return 6
 
-printLine(testRet())
+printLineInteger(testRet())

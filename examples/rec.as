@@ -1,5 +1,5 @@
 function rec (Integer x):
-	printLine(x)
+	printLineInteger(x)
 	if x > 0:
 		rec(x - 1)
 	else:

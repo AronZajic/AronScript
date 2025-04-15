@@ -2,39 +2,42 @@ int src_i;
 int token_i = 0;
 
 enum TokenType {
-    INTEGER_VALUE_TOKEN = 'N',
-    DECIMAL_VALUE_TOKEN = 'd',
-    EXPRESSION_TOKEN = 'X',
-    LEFT_P_TOKEN = '(',
-    RIGHT_P_TOKEN = ')',
-    END_TOKEN = 'E',
-    BINARY_OPERATION_TOKEN = 'B',
-    TAB_TOKEN = 'T',
-    FOR_TOKEN = 'F',
-    WHILE_TOKEN = 'W',
+
     INTEGER_TOKEN = 'I',
     DECIMAL_TOKEN = 'D',
     BOOLEAN_TOKEN = 'b',
-    LIST_TOKEN = 'L',
-    FUNCTION_TOKEN = 'f',
+    TRUE_TOKEN = 't',
+    FALSE_TOKEN = 'a',
     IF_TOKEN = 'i',
     ELSE_TOKEN = 'e',
     ELSE_IF_TOKEN = 'o',
-    STRUCT_TOKEN = 'S',
+    NOT_TOKEN = 'O',
+    BREAK_TOKEN = 'r',
+    CONTINUE_TOKEN = 'c',
+    WHILE_TOKEN = 'W',
+    FUNCTION_TOKEN = 'f',
+    RETURN_TOKEN = 'R',
+
+    INTEGER_VALUE_TOKEN = 'N',
+    DECIMAL_VALUE_TOKEN = 'd',
+
+    BINARY_OPERATION_TOKEN = 'B',
+    
+    TAB_TOKEN = 'T',
+    
     NAME_TOKEN = 'A',
+    FUNCTION_CALL_TOKEN = 'C',
+
+    LEFT_P_TOKEN = '(',
+    RIGHT_P_TOKEN = ')',
+    COMA_TOKEN = ',',
+    DOT_TOKEN = '.',
     ASIGN_TOKEN = '=',
     EQUALS_TOKEN = '"',
     COLON_TOKEN = ':',
     ARROW_TOKEN = '>',
-    RETURN_TOKEN = 'R',
-    FUNCTION_CALL_TOKEN = 'C',
-    COMA_TOKEN = ',',
-    DOT_TOKEN = '.',
-    TRUE_TOKEN = 't',
-    FALSE_TOKEN = 'a',
-    NOT_TOKEN = 'O',
-    BREAK_TOKEN = 'r',
-    CONTINUE_TOKEN = 'c'
+
+    END_TOKEN = 'E',
 };
 
 struct Token {
@@ -46,22 +49,16 @@ struct Token {
 char* getKeywordTokenTypeString(enum TokenType tokenType){
     switch (tokenType)
     {
-    case FOR_TOKEN:
-        return "for";
     case WHILE_TOKEN:
         return "while";
     case INTEGER_TOKEN:
         return "Integer";
     case DECIMAL_TOKEN:
         return "Decimal";
-    case LIST_TOKEN:
-        return "List";
     case FUNCTION_TOKEN:
         return "fun";
     case IF_TOKEN:
         return "if";
-    case STRUCT_TOKEN:
-        return "Struct";
     default:
         return NULL;
     }

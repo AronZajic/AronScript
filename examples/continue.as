@@ -7,4 +7,4 @@ while x < 20:
 	if x == 10:
 		continue
 
-	printLine(x)
+	printLineInteger(x)
