@@ -1,29 +1,21 @@
-<statement> ::= <expression> <NEWLINE> | <declare> | <assign> | <if> | <while> | "break" <NEWLINE> | "continue" <NEWLINE> | <functionDefinition> | <return> | <include>
-
+<statement> ::= <expression> <NEWLINE> | <declare> |
+	<assign> | <if> | <while> | "break" <NEWLINE> |
+	"continue" <NEWLINE> | <functionDefinition> |
+	<return> | <include>
 <functionDefinition> ::= 
 	"function" <name> "(" <params>? ")" ":" <block> |
 	"function" <name> "(" <params>? ")" -> <type> ":" <block>
-
 <params> ::= <type> <name> ("," <type> <name>)*
-
 <block> ::= <NEWLINE> <INDENT> <statement>* <DEDENT>
-
 <if> ::= "if" <expression> ":" <block> <elseIf>? <else>?
-
 <elseIf> ::= "elseIf" <expression> ":" <block> <elseIf>
-
 <else> ::= "else" ":" <block>
-
 <while> ::= "while" <expression> ":" <block>
-
 <include> ::= "include" <STRING> <NEWLINE>
-
 <return> ::= "return" <expression> <NEWLINE>
-
-<declare> ::= <type> <name> <NEWLINE> | <type> <name> "=" <expression> <NEWLINE>
-
+<declare> ::= <type> <name> <NEWLINE> |
+	<type> <name> "=" <expression> <NEWLINE>
 <assign> ::= <name> "=" <expression> <NEWLINE>
-
 <expression> ::= <value> | "(" <expression> ")" |
 	<expression> "<" <expression>  |
 	<expression> ">" <expression>  |
@@ -38,23 +30,11 @@
 	<expression> "and"<expression> |
 	<expression> "or" <expression> |
 	"not" <expression>
-
 <functionCall> ::= <name> "(" <arguments>  ")"
-
 <arguments> ::= <expression> ("," <expression>)*
-
 <value> ::= <NUMBER> 
-| <name>
-| "True" 
-| "False" 
-| "Null" 
-| <list>
-| <functionCall> 
-
-<type> ::= "Integer" | "Float" | "Boolean" | "Character" | <listType>
-
-<listType> ::= "List" "<" <type> ">"
-
-<list> ::= "[" <values>? "]"
-
-<values> ::=  <expression> ("," <expression>)*
+	| <name>
+	| "True" 
+	| "False" 
+	| <functionCall> 
+<type> ::= "Integer" | "Decimal" | "Boolean"

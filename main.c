@@ -78,7 +78,7 @@ int replPrint(struct Node* node, struct Context *context){
 		evalNode = eval(node, context);
 
 		if(evalNode.evalType == NULL_TYPE){
-			printf("Error got NULL type as result.\n");
+			printf("Error, got NULL type as result.\n");
 			return 0;
 		}
 

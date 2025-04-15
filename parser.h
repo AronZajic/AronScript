@@ -182,7 +182,7 @@ struct Node* variable() {
     return node;
 }
 
-struct Node* binary_operation() {
+struct Node* binaryOperation() {
 
     //printf("Parsing binary operation\n");
 
@@ -277,7 +277,7 @@ struct Node* negation() {
     return e;
 }
 
-struct Node* handle_infix(struct Node* tmp);
+struct Node* handleInfix(struct Node* tmp);
 
 struct Node* expression() {
 
@@ -290,24 +290,24 @@ struct Node* expression() {
     {
     case INTEGER_VALUE_TOKEN:
         tmp = integerValue();
-        e = handle_infix(tmp);
+        e = handleInfix(tmp);
         break;
     case DECIMAL_VALUE_TOKEN:
         tmp = decimalValue();
-        e = handle_infix(tmp);
+        e = handleInfix(tmp);
         break;
     case TRUE_TOKEN:
     case FALSE_TOKEN:
         tmp = booleanValue();
-        e = handle_infix(tmp);
+        e = handleInfix(tmp);
         break;
     case NAME_TOKEN:
         tmp = variable();
-        e = handle_infix(tmp);
+        e = handleInfix(tmp);
         break;
     case FUNCTION_CALL_TOKEN:
 		tmp = functionCall();
-		e = handle_infix(tmp);
+		e = handleInfix(tmp);
 		break;
     case LEFT_P_TOKEN:
         //printf("Expression LEFT\n");
@@ -316,14 +316,14 @@ struct Node* expression() {
         rightP();
 
         /*if(peek().tokenType == BINARY_OPERATION_TOKEN){
-            e = binary_operation();
+            e = binaryOperation();
             e->left = tmp;
             e->right = expression();
         } else {
             e = tmp;
         }*/
 
-        e = handle_infix(tmp);
+        e = handleInfix(tmp);
         break;
     case BINARY_OPERATION_TOKEN:
         //printf("Expression BIN\n");
@@ -337,12 +337,12 @@ struct Node* expression() {
         tmp->nodeType = VALUE_NODE;
         tmp->value.integerValue = 0;
 
-        e = handle_infix(tmp);
+        e = handleInfix(tmp);
 
         break;
     case NOT_TOKEN:
         tmp = negation();
-        e = handle_infix(tmp);
+        e = handleInfix(tmp);
         break;
     default:
         fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
@@ -352,7 +352,7 @@ struct Node* expression() {
     return e;
 }
 
-void infix_helper(struct Node* dest){
+void infixHelper(struct Node* dest){
     switch(peek().tokenType){
     case INTEGER_VALUE_TOKEN:
         dest->right = integerValue();
@@ -384,7 +384,7 @@ void infix_helper(struct Node* dest){
     }
 }
 
-struct Node* handle_infix(struct Node* tmp){
+struct Node* handleInfix(struct Node* tmp){
 
     struct Node* e = NULL;
 
@@ -392,16 +392,16 @@ struct Node* handle_infix(struct Node* tmp){
 
         if(e != NULL && e->presedence < peek().presedence){
             tmp = e->right;
-            e->right = binary_operation();
+            e->right = binaryOperation();
             e->right->left = tmp;
-            infix_helper(e->right);
+            infixHelper(e->right);
             tmp = e;
             continue;
         }
 
-        e = binary_operation();
+        e = binaryOperation();
         e->left = tmp;
-        infix_helper(e);
+        infixHelper(e);
         tmp = e;
     }
 
@@ -813,7 +813,7 @@ struct Node* statement() {
         } else {
             e->nodeType = VARIABLE_NODE;
             struct Node* tmp = e;
-            e = handle_infix(tmp);
+            e = handleInfix(tmp);
         }
         break;
 	case IF_TOKEN:
@@ -850,20 +850,6 @@ struct Node* statement() {
 }
 
 struct Node* parse(char* src){
-
-    /*token_i_parser = 0;
-
-    tokenize2(src, tokens);
-
-    printf("\n");
-
-    for(int j = 0; j < 10; j++){
-
-        struct Token token = tokens[j];
-
-        printf("( %c, %c, %d, %d ), ", token.tokenType, token.value, token.value, j);
-
-    }*/
 
     token_i_parser = 0;
 

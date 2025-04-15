@@ -1,7 +1,7 @@
 Compilation:
 
 ```
-gcc main.c `pkg-config --cflags --libs glib-2.0` -static-libgcc -static-libstdc++ -lcmocka -g -o AronScript.exe
+gcc main.c `pkg-config --cflags --libs glib-2.0` -static-libgcc -static-libstdc++ -lcmocka -Wall -Werror -g -o AronScript.exe
 ```
 
 Running as REPL:
