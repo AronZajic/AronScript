@@ -4,21 +4,6 @@ union Value
 	float decimalValue;
 };
 
-enum BinaryOperation {
-    PLUS = '+',
-    MINUS = '-',
-    MULTIPLY = '*',
-    DIVIDE = '/',
-    LESS_THAN = '<',
-    GREATER_THAN = '>',
-    EQUALS = 'Q',
-    NOT_EQUALS = '!',
-    AND = '&',
-    OR = '|',
-    LESS_THAN_EQUAL = '4',
-    GREATER_THAN_EQUAL = '7',
-};
-
 enum NodeType {
     VALUE_NODE = 'N',
     VARIABLE_NODE = 'V',

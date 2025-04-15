@@ -396,39 +396,42 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			result.valueType = INTEGER;
 			switch (node->nodeUnion.binaryOperationNode.binaryOperation)
 			{
-			case '+':
+			case PLUS:
 				result.value.integerValue = left.value.integerValue + right.value.integerValue;
 				break;
-			case '-':
+			case MINUS:
 				result.value.integerValue = left.value.integerValue - right.value.integerValue;
 				break;
-			case '*':
+			case MULTIPLY:
 				result.value.integerValue = left.value.integerValue * right.value.integerValue;
 				break;
-			case '/':
+			case DIVIDE:
 				result.value.integerValue = left.value.integerValue / right.value.integerValue;
 				break;
-			case '<':
+			case REMAINDER:
+				result.value.integerValue = left.value.integerValue % right.value.integerValue;
+				break;
+			case LESS_THAN:
 				result.value.integerValue = left.value.integerValue < right.value.integerValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '>':
+			case GREATER_THAN:
 				result.value.integerValue = left.value.integerValue > right.value.integerValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '7':
+			case GREATER_THAN_EQUAL:
 				result.value.integerValue = left.value.integerValue >= right.value.integerValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '4':
+			case LESS_THAN_EQUAL:
 				result.value.integerValue = left.value.integerValue <= right.value.integerValue;
 				result.valueType = BOOLEAN;
 				break;
-			case 'Q':
+			case EQUALS:
 				result.value.integerValue = left.value.integerValue == right.value.integerValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '!':
+			case NOT_EQUALS:
 				result.value.integerValue = left.value.integerValue != right.value.integerValue;
 				result.valueType = BOOLEAN;
 				break;
@@ -442,41 +445,45 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			result.valueType = DECIMAL;
 			switch (node->nodeUnion.binaryOperationNode.binaryOperation)
 			{
-			case '+':
+			case PLUS:
 				result.value.decimalValue = left.value.decimalValue + right.value.decimalValue;
 				break;
-			case '-':
+			case MINUS:
 				result.value.decimalValue = left.value.decimalValue - right.value.decimalValue;
 				break;
-			case '*':
+			case MULTIPLY:
 				result.value.decimalValue = left.value.decimalValue * right.value.decimalValue;
 				break;
-			case '/':
+			case DIVIDE:
 				result.value.decimalValue = left.value.decimalValue / right.value.decimalValue;
 				break;
-			case '<':
+			case LESS_THAN:
 				result.value.integerValue = left.value.decimalValue < right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '>':
+			case GREATER_THAN:
 				result.value.integerValue = left.value.decimalValue > right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '7':
+			case GREATER_THAN_EQUAL:
 				result.value.integerValue = left.value.decimalValue >= right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '4':
+			case LESS_THAN_EQUAL:
 				result.value.integerValue = left.value.decimalValue <= right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
-			case 'Q':
+			case EQUALS:
 				result.value.integerValue = left.value.decimalValue == right.value.decimalValue;
 				result.valueType = BOOLEAN;
 				break;
-			case '!':
+			case NOT_EQUALS:
 				result.value.integerValue = left.value.decimalValue != right.value.decimalValue;
 				result.valueType = BOOLEAN;
+				break;
+			case REMAINDER:
+				fprintf(stderr, "Decimal types do not support %% operation.\n");
+				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
@@ -488,26 +495,27 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			result.valueType = BOOLEAN;
 			switch (node->nodeUnion.binaryOperationNode.binaryOperation)
 			{
-			case 'Q':
+			case EQUALS:
 				result.value.integerValue = left.value.integerValue == right.value.integerValue;
 				break;
-			case '!':
+			case NOT_EQUALS:
 				result.value.integerValue = left.value.integerValue == right.value.integerValue;
 				break;
-			case '&':
+			case AND:
 				result.value.integerValue = left.value.integerValue && right.value.integerValue;
 				break;
-			case '|':
+			case OR:
 				result.value.integerValue = left.value.integerValue || right.value.integerValue;
 				break;
-			case '<':
-			case '>':
-			case '7':
-			case '4':
-			case '+':
-			case '-':
-			case '*':
-			case '/':
+			case LESS_THAN:
+			case GREATER_THAN:
+			case GREATER_THAN_EQUAL:
+			case LESS_THAN_EQUAL:
+			case PLUS:
+			case MINUS:
+			case MULTIPLY:
+			case DIVIDE:
+			case REMAINDER:
 				fprintf(stderr, "BOOLEAN types do not support <, >, <=, >= and aritmetic operations.\n");
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 				break;

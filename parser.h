@@ -327,7 +327,7 @@ struct Node* expression() {
         break;
     case BINARY_OPERATION_TOKEN:
         //printf("Expression BIN\n");
-        if(!(peek().value[0] == '-' || peek().value[0] == '+')){ // TODO prerobiť lebo takto môze začať aj so zobakom
+        if(!(peek().value[0] == MINUS || peek().value[0] == PLUS)){ // TODO prerobiť lebo takto môze začať aj so zobakom
             fprintf(stderr, "Expression can not start with %c.\n", peek().value[0]);
             e = NULL;
             break;

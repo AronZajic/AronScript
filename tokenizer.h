@@ -1,6 +1,23 @@
 int src_i;
 int token_i = 0;
 
+enum BinaryOperation {
+    PLUS,
+    MINUS,
+    MULTIPLY,
+    DIVIDE,
+    LESS_THAN,
+    GREATER_THAN,
+    EQUALS,
+    NOT_EQUALS,
+    AND,
+    OR,
+    LESS_THAN_EQUAL,
+    GREATER_THAN_EQUAL,
+    REMAINDER,
+    INVALID = 0
+};
+
 enum TokenType {
 
     INTEGER_TOKEN = 'I',
@@ -280,14 +297,14 @@ int tokenize(char src[], struct Token tokens[]){
         if(match(src, "or", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = -1;
-            tokens[token_i].value[0] = '|';
+            tokens[token_i].value[0] = OR;
             token_i++;
             continue;
         }
         if(match(src, "and", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 0;
-            tokens[token_i].value[0] = '&';
+            tokens[token_i].value[0] = AND;
             token_i++;
             continue;
         }
@@ -295,42 +312,42 @@ int tokenize(char src[], struct Token tokens[]){
         if(match(src, "==", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
-            tokens[token_i].value[0] = 'Q';
+            tokens[token_i].value[0] = EQUALS;
             token_i++;
             continue;
         }
         if(match(src, "!=", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
-            tokens[token_i].value[0] = '!';
+            tokens[token_i].value[0] = NOT_EQUALS;
             token_i++;
             continue;
         }
         if(match(src, "<=", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
-            tokens[token_i].value[0] = '4';
+            tokens[token_i].value[0] = LESS_THAN_EQUAL;
             token_i++;
             continue;
         }
         if(match(src, ">=", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
-            tokens[token_i].value[0] = '7';
+            tokens[token_i].value[0] = GREATER_THAN_EQUAL;
             token_i++;
             continue;
         }
         if(match(src, "<", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
-            tokens[token_i].value[0] = '<';
+            tokens[token_i].value[0] = LESS_THAN;
             token_i++;
             continue;
         }
         if(match(src, ">", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 1;
-            tokens[token_i].value[0] = '>';
+            tokens[token_i].value[0] = GREATER_THAN;
             token_i++;
             continue;
         }
@@ -338,14 +355,14 @@ int tokenize(char src[], struct Token tokens[]){
         if(match(src, "+", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 2;
-            tokens[token_i].value[0] = '+';
+            tokens[token_i].value[0] = PLUS;
             token_i++;
             continue;
         }
         if(match(src, "-", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 2;
-            tokens[token_i].value[0] = '-';
+            tokens[token_i].value[0] = MINUS;
             token_i++;
             continue;
         }
@@ -353,14 +370,21 @@ int tokenize(char src[], struct Token tokens[]){
         if(match(src, "*", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 3;
-            tokens[token_i].value[0] = '*';
+            tokens[token_i].value[0] = MULTIPLY;
             token_i++;
             continue;
         }
         if(match(src, "/", NULL, 0)){
             tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
             tokens[token_i].presedence = 3;
-            tokens[token_i].value[0] = '/';
+            tokens[token_i].value[0] = DIVIDE;
+            token_i++;
+            continue;
+        }
+        if(match(src, "%", NULL, 0)){
+            tokens[token_i].tokenType = BINARY_OPERATION_TOKEN;
+            tokens[token_i].presedence = 3;
+            tokens[token_i].value[0] = REMAINDER;
             token_i++;
             continue;
         }
