@@ -1,39 +1,6 @@
 #include <string.h>
 #include "interpreter.h"
 
-/*int handleIf(struct Node* node, GHashTable *contextVariables, GHashTable *contextFunctions){
-	int tmp;
-	for (GList *l = node->body; l != NULL; l = l->next) {
-
-		struct Node* iteratorNode = l->data;
-
-		if(iteratorNode->nodeType == IF_NODE){
-			if(eval(iteratorNode->condition, contextVariables, contextFunctions)){
-				for (GList *l2 = iteratorNode->body; l2 != NULL; l2 = l2->next) {
-					handleIf(l2->data, contextVariables, contextFunctions);
-				}
-				continue;
-			} else {
-				l = l->next;
-				iteratorNode = l->data;
-
-				if(l != NULL){
-					break;
-				}
-
-				if(iteratorNode->nodeType == ELSE_NODE){
-					for (GList *l2 = iteratorNode->body; l2 != NULL; l2 = l2->next) {
-						handleIf(l2->data, contextVariables, contextFunctions);
-					}
-					continue;
-				}
-			}
-		}
-		tmp = eval(l->data, contextVariables, contextFunctions);
-	}
-	return tmp;
-}*/
-
 int replPrint(struct Node* node, struct Context *context){
 
 	struct EvalNode evalNode;
@@ -42,7 +9,7 @@ int replPrint(struct Node* node, struct Context *context){
 
 		int didSomething = 0;
 
-		for (GList *l = node->body; l != NULL; l = l->next) {
+		for (GList *l = node->nodeUnion.statementsNode.body; l != NULL; l = l->next) {
 
 			evalNode = eval(l->data, context);
 
@@ -66,10 +33,6 @@ int replPrint(struct Node* node, struct Context *context){
 		}
 		return 0;
 	}
-
-	/*if(node->nodeType == WHILE_NODE || node->nodeType == IF_NODE){
-		eval(node, contextVariables, contextFunctions);
-	}*/
 
 	if(node->nodeType == VALUE_NODE || node->nodeType == BINARY_OPERATION_NODE || node->nodeType == VARIABLE_NODE || node->nodeType == FUNCTION_CALL_NODE || node->nodeType == NOT_NODE){
 
@@ -137,32 +100,32 @@ int replPrint(struct Node* node, struct Context *context){
 
 	if(node->nodeType == DEFINE_NODE){
 
-		if(g_hash_table_contains(context->variables, node->name)){
-			fprintf(stderr, "Variable %s already defined.\n", node->name);
+		if(g_hash_table_contains(context->variables, node->nodeUnion.asignDefineNode.name)){
+			fprintf(stderr, "Variable %s already defined.\n", node->nodeUnion.asignDefineNode.name);
 			return 0;
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
-		*tmpExpression = eval(node->expression, context);
+		*tmpExpression = eval(node->nodeUnion.asignDefineNode.expression, context);
 
-		if(tmpExpression->valueType != node->valueType){
-			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->valueType, tmpExpression->valueType);
+		if(tmpExpression->valueType != node->nodeUnion.asignDefineNode.valueType){
+			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->nodeUnion.asignDefineNode.valueType, tmpExpression->valueType);
 			return 0;
 		}
 
-		g_hash_table_insert(context->variables, g_strdup(node->name), tmpExpression);
+		g_hash_table_insert(context->variables, g_strdup(node->nodeUnion.asignDefineNode.name), tmpExpression);
 
 		if(tmpExpression->valueType == INTEGER){
-			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.integerValue);
+			printf("Integer %s set to %d.\n", node->nodeUnion.asignDefineNode.name, tmpExpression->value.integerValue);
 		}
 		if(tmpExpression->valueType == DECIMAL){
-			printf("Decimal %s set to %f.\n", node->name, tmpExpression->value.decimalValue);
+			printf("Decimal %s set to %f.\n", node->nodeUnion.asignDefineNode.name, tmpExpression->value.decimalValue);
 		}
 		if(tmpExpression->valueType == BOOLEAN){
 			if(tmpExpression->value.integerValue){
-				printf("Boolean %s set to True.\n", node->name);
+				printf("Boolean %s set to True.\n", node->nodeUnion.asignDefineNode.name);
 			} else {
-				printf("Boolean %s set to False.\n", node->name);
+				printf("Boolean %s set to False.\n", node->nodeUnion.asignDefineNode.name);
 			}
 		}
 
@@ -171,34 +134,34 @@ int replPrint(struct Node* node, struct Context *context){
 
 	if(node->nodeType == ASIGN_NODE){
 
-		if(!g_hash_table_contains(context->variables, node->name)){
-			fprintf(stderr, "Variable %s not defined.\n", node->name);
+		if(!g_hash_table_contains(context->variables, node->nodeUnion.asignDefineNode.name)){
+			fprintf(stderr, "Variable %s not defined.\n", node->nodeUnion.asignDefineNode.name);
 			return 0;
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
-		*tmpExpression = eval(node->expression, context);
+		*tmpExpression = eval(node->nodeUnion.asignDefineNode.expression, context);
 
-		struct EvalNode *tmpVariable = g_hash_table_lookup(context->variables, node->name);
+		struct EvalNode *tmpVariable = g_hash_table_lookup(context->variables, node->nodeUnion.asignDefineNode.name);
 
 		if(tmpExpression->valueType != tmpVariable->valueType){
 			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
 			return 0;
 		}
 
-		g_hash_table_insert(context->variables, g_strdup(node->name), tmpExpression);
+		g_hash_table_insert(context->variables, g_strdup(node->nodeUnion.asignDefineNode.name), tmpExpression);
 
 		if(tmpExpression->valueType == INTEGER){
-			printf("Integer %s set to %d.\n", node->name, tmpExpression->value.integerValue);
+			printf("Integer %s set to %d.\n", node->nodeUnion.asignDefineNode.name, tmpExpression->value.integerValue);
 		}
 		if(tmpExpression->valueType == DECIMAL){
-			printf("Decimal %s set to %f.\n", node->name, tmpExpression->value.decimalValue);
+			printf("Decimal %s set to %f.\n", node->nodeUnion.asignDefineNode.name, tmpExpression->value.decimalValue);
 		}
 		if(tmpExpression->valueType == BOOLEAN){
 			if(tmpExpression->value.integerValue){
-				printf("Boolean %s set to True.\n", node->name);
+				printf("Boolean %s set to True.\n", node->nodeUnion.asignDefineNode.name);
 			} else {
-				printf("Boolean %s set to False.\n", node->name);
+				printf("Boolean %s set to False.\n", node->nodeUnion.asignDefineNode.name);
 			}
 		}
 
@@ -206,12 +169,12 @@ int replPrint(struct Node* node, struct Context *context){
 	}
 
 	if(node->nodeType == FUNCTION_DECLARATION_NODE){
-		if(g_hash_table_contains(context->functions, node->name)){
-			fprintf(stderr, "Function %s already defined.\n", node->name);
+		if(g_hash_table_contains(context->functions, node->nodeUnion.functionDeclarationNode.name)){
+			fprintf(stderr, "Function %s already defined.\n", node->nodeUnion.functionDeclarationNode.name);
 			return 0;
 		}
-		g_hash_table_insert(context->functions, g_strdup(node->name), node);
-		printf("Function %s defined.\n", node->name);
+		g_hash_table_insert(context->functions, g_strdup(node->nodeUnion.functionDeclarationNode.name), node);
+		printf("Function %s defined.\n", node->nodeUnion.functionDeclarationNode.name);
 		return 0;
 	}
 
@@ -236,7 +199,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 		if(node != NULL){
 
 			if(node->indentation == parent->indentation + 1){
-				parent->body = g_list_append(parent->body, node);
+				parent->nodeUnion.statementsNode.body = g_list_append(parent->nodeUnion.statementsNode.body, node);
 			}
 
 			if(node->indentation > parent->indentation + 1){
@@ -248,46 +211,56 @@ struct Node* read_file(FILE *file, struct Node *parent){
 				return node;
 			}
 
-			if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
-				node->statements = malloc(sizeof(struct Node));
-				node->statements->indentation = node->indentation;
-				node->statements->nodeType = STATEMENTS_NODE;
-				node->statements->body = NULL;
-				struct Node* tmp = read_file(file, node->statements);
+			if(node->nodeType == WHILE_NODE){
+				node->nodeUnion.whileNode.statements = malloc(sizeof(struct Node));
+				node->nodeUnion.whileNode.statements->indentation = node->indentation;
+				node->nodeUnion.whileNode.statements->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.whileNode.statements->nodeUnion.statementsNode.body = NULL;
+				struct Node* tmp = read_file(file, node->nodeUnion.whileNode.statements);
+				node = tmp;
+				goto placeNode;
+			}
+
+			if(node->nodeType == FUNCTION_DECLARATION_NODE){
+				node->nodeUnion.functionDeclarationNode.statements = malloc(sizeof(struct Node));
+				node->nodeUnion.functionDeclarationNode.statements->indentation = node->indentation;
+				node->nodeUnion.functionDeclarationNode.statements->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.functionDeclarationNode.statements->nodeUnion.statementsNode.body = NULL;
+				struct Node* tmp = read_file(file, node->nodeUnion.functionDeclarationNode.statements);
 				node = tmp;
 				goto placeNode;
 			}
 
 			if(node->nodeType == IF_NODE){
-				node->left = malloc(sizeof(struct Node));
-				node->left->indentation = node->indentation;
-				node->left->nodeType = STATEMENTS_NODE;
-				node->left->body = NULL;
-				node->right = NULL;
+				node->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
+				node->nodeUnion.ifNode.left->indentation = node->indentation;
+				node->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
+				node->nodeUnion.ifNode.right = NULL;
 
-				struct Node* tmp = read_file(file, node->left);
+				struct Node* tmp = read_file(file, node->nodeUnion.ifNode.left);
 				struct Node* tmpDescend = node;
 
 				while(tmp != NULL && tmp->nodeType == ELSE_IF_NODE){
-					tmpDescend->right = tmp;
-					tmpDescend->right->nodeType = IF_NODE;
+					tmpDescend->nodeUnion.ifNode.right = tmp;
+					tmpDescend->nodeUnion.ifNode.right->nodeType = IF_NODE;
 
-					tmpDescend->right->left = malloc(sizeof(struct Node));
-					tmpDescend->right->left->indentation = tmpDescend->indentation;
-					tmpDescend->right->left->nodeType = STATEMENTS_NODE;
-					tmpDescend->right->left->body = NULL;
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->indentation = tmpDescend->indentation;
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
 
-					tmp = read_file(file, tmpDescend->right->left);
-					tmpDescend = tmpDescend->right;
+					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left);
+					tmpDescend = tmpDescend->nodeUnion.ifNode.right;
 				}
 
 				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
-					tmpDescend->right = malloc(sizeof(struct Node));
-					tmpDescend->right->indentation = node->indentation;
-					tmpDescend->right->nodeType = STATEMENTS_NODE;
-					tmpDescend->right->body = NULL;
+					tmpDescend->nodeUnion.ifNode.right = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.right->indentation = node->indentation;
+					tmpDescend->nodeUnion.ifNode.right->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.statementsNode.body = NULL;
 					free(tmp);
-					tmp = read_file(file, tmpDescend->right);
+					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.right);
 				}
 				node = tmp;
 				goto placeNode;
@@ -316,7 +289,7 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 		if(node != NULL){
 
 			if(node->indentation == parent->indentation + 1){
-				parent->body = g_list_append(parent->body, node);
+				parent->nodeUnion.statementsNode.body = g_list_append(parent->nodeUnion.statementsNode.body, node);
 			}
 
 			if(node->indentation > parent->indentation + 1){
@@ -328,29 +301,56 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 				return node;
 			}
 
-			if(node->nodeType == WHILE_NODE || node->nodeType == FUNCTION_DECLARATION_NODE){
-				struct Node* tmp = replRead(node, ";");
+			if(node->nodeType == WHILE_NODE){
+				node->nodeUnion.whileNode.statements = malloc(sizeof(struct Node));
+				node->nodeUnion.whileNode.statements->indentation = node->indentation;
+				node->nodeUnion.whileNode.statements->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.whileNode.statements->nodeUnion.statementsNode.body = NULL;
+				struct Node* tmp = replRead(node->nodeUnion.whileNode.statements, ";");
+				node = tmp;
+				goto placeNode;
+			}
+
+			if(node->nodeType == FUNCTION_DECLARATION_NODE){
+				node->nodeUnion.functionDeclarationNode.statements = malloc(sizeof(struct Node));
+				node->nodeUnion.functionDeclarationNode.statements->indentation = node->indentation;
+				node->nodeUnion.functionDeclarationNode.statements->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.functionDeclarationNode.statements->nodeUnion.statementsNode.body = NULL;
+				struct Node* tmp = replRead(node->nodeUnion.functionDeclarationNode.statements, ";");
 				node = tmp;
 				goto placeNode;
 			}
 
 			if(node->nodeType == IF_NODE){
-				node->left = malloc(sizeof(struct Node));
-				node->left->indentation = node->indentation;
-				node->left->nodeType = STATEMENTS_NODE;
-				node->left->body = NULL;
+				node->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
+				node->nodeUnion.ifNode.left->indentation = node->indentation;
+				node->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
+				node->nodeUnion.ifNode.right = NULL;
 
-				struct Node* tmp = replRead(node->left, ";");
+				struct Node* tmp = replRead(node->nodeUnion.ifNode.left, ";");
+				struct Node* tmpDescend = node;
+
+				while(tmp != NULL && tmp->nodeType == ELSE_IF_NODE){
+					tmpDescend->nodeUnion.ifNode.right = tmp;
+					tmpDescend->nodeUnion.ifNode.right->nodeType = IF_NODE;
+
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->indentation = tmpDescend->indentation;
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
+
+					tmp = replRead(tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left, ";");
+					tmpDescend = tmpDescend->nodeUnion.ifNode.right;
+				}
 
 				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
-					node->right = malloc(sizeof(struct Node));
-					node->right->indentation = node->indentation;
-					node->right->nodeType = STATEMENTS_NODE;
-					node->right->body = NULL;
-
-					tmp = replRead(node->right, ";");
-				} else {
-					node->right = NULL;
+					tmpDescend->nodeUnion.ifNode.right = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.right->indentation = node->indentation;
+					tmpDescend->nodeUnion.ifNode.right->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.right->nodeUnion.statementsNode.body = NULL;
+					free(tmp);
+					tmp = replRead(tmpDescend->nodeUnion.ifNode.right, ";");
 				}
 				node = tmp;
 				goto placeNode;
@@ -365,22 +365,6 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 		input[strcspn(input, "\n")] = 0;
 	}
 	return NULL;   
-}
-
-void treeprint(struct Node *root, int level){
-	if (root == NULL)
-			return;
-	for (int i = 0; i < level; i++)
-			printf("  ");
-	printf("%c %d %c\n", root->nodeType, root->value.integerValue, root->binaryOperation);
-	if(root->nodeType == BINARY_OPERATION_NODE || root->nodeType == IF_NODE){
-		treeprint(root->left, level + 1);
-		treeprint(root->right, level + 1);
-	} else if(root->nodeType == WHILE_NODE || root->nodeType == STATEMENTS_NODE || root->nodeType == FUNCTION_DECLARATION_NODE){
-		for (GList *l = root->statements->body; l != NULL; l = l->next) {
-			treeprint(l->data, level + 1);
-		}
-	}
 }
 
 int main(int argc, char **argv) {
@@ -408,19 +392,19 @@ int main(int argc, char **argv) {
 	struct Node *program = malloc(sizeof(struct Node));
 	program->nodeType = STATEMENTS_NODE;
 	program->indentation = -1;
-	program->body = NULL;
+	program->nodeUnion.statementsNode.body = NULL;
 
 	if(argc == 1){
 
 		while (1)
 		{
 
-			program->body = NULL;
+			program->nodeUnion.statementsNode.body = NULL;
 
 			replRead(program, ">");
 
-			if(g_list_length(program->body) != 0)
-				replPrint(program->body->data, context);
+			if(g_list_length(program->nodeUnion.statementsNode.body) != 0)
+				replPrint(program->nodeUnion.statementsNode.body->data, context);
 		}
 	} else {
 
@@ -434,8 +418,6 @@ int main(int argc, char **argv) {
         }
 
 		read_file(file, program);
-
-		//treeprint(program, 0);
 
 		replPrint(program, context);
 		//eval(program, context);

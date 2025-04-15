@@ -29,4 +29,4 @@ fun()
 
 printLineInteger(doubleIt(16))
 
-printLineInteger(add(1.2, 2.4))
+printLineDecimal(add(1.2, 2.4))

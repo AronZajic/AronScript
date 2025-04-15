@@ -43,6 +43,7 @@ enum NodeType {
 enum ValueType {
     INTEGER = 'I',
     DECIMAL = 'D',
+    ZERO = 'Z',
     BOOLEAN = 'B',
     NULL_TYPE_VALUE = 'N'
 };
@@ -52,36 +53,113 @@ enum ValueType {
     char* name;
 };*/
 
-struct Node {
-    enum NodeType nodeType;
-    int indentation;
-
-    // Type VALUE
+struct ValueNode {
     enum ValueType valueType;
     union Value value;
+};
 
-    // Type BINARYOP
+struct VariableNode {
+    //enum ValueType valueType;
+    char* name;
+};
+
+struct AsignDefineNode {
+    enum ValueType valueType;
+    union Value value;
+    char* name;
+    struct Node* expression;
+};
+
+struct FunctionDeclarationNode {
+    char* name;
+    enum ValueType retutnType;
+    GList* arguments;
+    struct Node* statements;
+};
+
+struct FunctionCallNode {
+    char* name;
+    GList* arguments;
+};
+
+struct BinaryOperationNode {
     enum BinaryOperation binaryOperation;
     struct Node* left;
     struct Node* right;
     int presedence;
+};
+
+struct WhileNode {
+    struct Node* condition;
+    struct Node* statements;
+};
+
+struct ReturnNode {
+    struct Node* expression;
+};
+
+struct StatementsNode {
+    GList* body;
+};
+
+struct IfNode {
+    struct Node* condition;
+    struct Node* left;
+    struct Node* right;
+};
+
+struct NotNode {
+    struct Node* expression;
+};
+
+union NodeUnion
+{
+    struct ValueNode valueNode;
+    struct VariableNode variableNode;
+    struct AsignDefineNode asignDefineNode;
+    struct FunctionDeclarationNode functionDeclarationNode;
+    struct FunctionCallNode functionCallNode;
+    struct BinaryOperationNode binaryOperationNode;
+    struct WhileNode whileNode;
+    struct ReturnNode returnNode;
+    struct StatementsNode statementsNode;
+    struct IfNode ifNode;
+    struct NotNode notNode;
+};
+
+
+struct Node {
+    enum NodeType nodeType;
+    int indentation;
+
+    union NodeUnion nodeUnion;
+
+    // Type VALUE
+    // enum ValueType valueType;
+    // union Value value;
+
+    // Type BINARYOP
+    // enum BinaryOperation binaryOperation;
+    // struct Node* left;
+    // struct Node* right;
+    // int presedence;
 
     // Type VARIABLE
-    char* name;
+    // char* name;
     // enum ValueType valueType;
     // union Value value;
 
     // Type WHILE
-    struct Node* condition;
-    struct Node* statements;
+    // struct Node* condition;
+    // struct Node* statements;
 
     // Type FUNCTION_DECLARATION
     // char* name;
-    enum ValueType retutnType;
-    GList* arguments;
+    // enum ValueType retutnType;
+    // GList* arguments;
 
     // Type RETURN
-    struct Node* expression;
+    // struct Node* expression;
 
     // Type FUNCTION_CALL
     // GList* arguments;
@@ -90,5 +168,5 @@ struct Node {
     // enum ValueType valueType;
 
     // Type STATEMENTS
-    GList* body;
+    // GList* body;
 };

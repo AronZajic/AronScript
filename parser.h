@@ -53,8 +53,8 @@ struct Node* integerValue() {
     struct Node* node = malloc(sizeof(struct Node));
 
     node->nodeType = VALUE_NODE;
-    node->valueType = INTEGER;
-    node->value.integerValue = atoi(token.value);
+    node->nodeUnion.valueNode.valueType = INTEGER;
+    node->nodeUnion.valueNode.value.integerValue = atoi(token.value);
 
     return node;
 }
@@ -130,8 +130,8 @@ struct Node* decimalValue() {
     struct Node* node = malloc(sizeof(struct Node));
 
     node->nodeType = VALUE_NODE;
-    node->valueType = DECIMAL;
-    node->value.decimalValue = atof(tmp);
+    node->nodeUnion.valueNode.valueType = DECIMAL;
+    node->nodeUnion.valueNode.value.decimalValue = atof(tmp);
 
     return node;
 }
@@ -150,12 +150,12 @@ struct Node* booleanValue() {
     struct Node* node = malloc(sizeof(struct Node));
 
     node->nodeType = VALUE_NODE;
-    node->valueType = BOOLEAN;
+    node->nodeUnion.valueNode.valueType = BOOLEAN;
 
     if(token.tokenType == TRUE_TOKEN){
-        node->value.integerValue = 1;
+        node->nodeUnion.valueNode.value.integerValue = 1;
     } else {
-        node->value.integerValue = 0;
+        node->nodeUnion.valueNode.value.integerValue = 0;
     }
 
     return node;
@@ -177,7 +177,7 @@ struct Node* variable() {
     node->nodeType = VARIABLE_NODE;
     //node->name = malloc(sizeof(token.value));
     //strncpy(node->name, token.value, strlen(token.value));
-    node->name = g_strdup(token.value);
+    node->nodeUnion.variableNode.name = g_strdup(token.value);
 
     return node;
 }
@@ -196,8 +196,8 @@ struct Node* binaryOperation() {
     struct Node* node = malloc(sizeof(struct Node));
 
     node->nodeType = BINARY_OPERATION_NODE;
-    node->binaryOperation = token.value[0];
-    node->presedence = token.presedence;
+    node->nodeUnion.binaryOperationNode.binaryOperation = token.value[0];
+    node->nodeUnion.binaryOperationNode.presedence = token.presedence;
 
     return node;
 
@@ -253,21 +253,21 @@ struct Node* negation() {
         return NULL;
     case TRUE_TOKEN:
     case FALSE_TOKEN:
-        e->expression = booleanValue();
+        e->nodeUnion.notNode.expression = booleanValue();
         break;
     case NAME_TOKEN:
-        e->expression = variable();
+        e->nodeUnion.notNode.expression = variable();
         break;
     case FUNCTION_CALL_TOKEN:
-        e->expression = functionCall();
+        e->nodeUnion.notNode.expression = functionCall();
 		break;
     case LEFT_P_TOKEN:
         leftP();
-        e->expression = expression();
+        e->nodeUnion.notNode.expression = expression();
         rightP();
         break;
     case NOT_TOKEN:
-        e->expression = negation();
+        e->nodeUnion.notNode.expression = negation();
         break;
     default:
         fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
@@ -327,7 +327,7 @@ struct Node* expression() {
         break;
     case BINARY_OPERATION_TOKEN:
         //printf("Expression BIN\n");
-        if(peek().value[0] == '*' || peek().value[0] == '/'){ // TODO prerobiť lebo takto môze začať aj so zobakom
+        if(!(peek().value[0] == '-' || peek().value[0] == '+')){ // TODO prerobiť lebo takto môze začať aj so zobakom
             fprintf(stderr, "Expression can not start with %c.\n", peek().value[0]);
             e = NULL;
             break;
@@ -335,7 +335,8 @@ struct Node* expression() {
 
         tmp = malloc(sizeof(struct Node));
         tmp->nodeType = VALUE_NODE;
-        tmp->value.integerValue = 0;
+        tmp->nodeUnion.valueNode.valueType = ZERO;
+        tmp->nodeUnion.valueNode.value.integerValue = 0;
 
         e = handleInfix(tmp);
 
@@ -355,28 +356,28 @@ struct Node* expression() {
 void infixHelper(struct Node* dest){
     switch(peek().tokenType){
     case INTEGER_VALUE_TOKEN:
-        dest->right = integerValue();
+        dest->nodeUnion.binaryOperationNode.right = integerValue();
         break;
     case DECIMAL_VALUE_TOKEN:
-        dest->right = decimalValue();
+        dest->nodeUnion.binaryOperationNode.right = decimalValue();
         break;
     case TRUE_TOKEN:
     case FALSE_TOKEN:
-        dest->right = booleanValue();
+        dest->nodeUnion.binaryOperationNode.right = booleanValue();
         break;
     case NAME_TOKEN:
-        dest->right = variable();
+        dest->nodeUnion.binaryOperationNode.right = variable();
         break;
 	case FUNCTION_CALL_TOKEN:
-		dest->right = functionCall();
+		dest->nodeUnion.binaryOperationNode.right = functionCall();
 		break;
     case LEFT_P_TOKEN:
         leftP();
-        dest->right = expression();
+        dest->nodeUnion.binaryOperationNode.right = expression();
         rightP();
         break;
     case NOT_TOKEN:
-        dest->right = negation();
+        dest->nodeUnion.binaryOperationNode.right = negation();
         break;
     default:
 		fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
@@ -390,17 +391,17 @@ struct Node* handleInfix(struct Node* tmp){
 
     while(peek().tokenType == BINARY_OPERATION_TOKEN){
 
-        if(e != NULL && e->presedence < peek().presedence){
-            tmp = e->right;
-            e->right = binaryOperation();
-            e->right->left = tmp;
-            infixHelper(e->right);
+        if(e != NULL && e->nodeUnion.binaryOperationNode.presedence < peek().presedence){
+            tmp = e->nodeUnion.binaryOperationNode.right;
+            e->nodeUnion.binaryOperationNode.right = binaryOperation();
+            e->nodeUnion.binaryOperationNode.right->nodeUnion.binaryOperationNode.left = tmp;
+            infixHelper(e->nodeUnion.binaryOperationNode.right);
             tmp = e;
             continue;
         }
 
         e = binaryOperation();
-        e->left = tmp;
+        e->nodeUnion.binaryOperationNode.left = tmp;
         infixHelper(e);
         tmp = e;
     }
@@ -423,7 +424,7 @@ struct Node* ifDescend() {
 	struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = IF_NODE;
 
-    e->condition = expression();
+    e->nodeUnion.ifNode.condition = expression();
 
 	colon();
 
@@ -441,7 +442,7 @@ struct Node* elseIfDescend() {
 	struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = ELSE_IF_NODE;
 
-    e->condition = expression();
+    e->nodeUnion.ifNode.condition = expression();
 	colon();
 
     return e;
@@ -516,18 +517,18 @@ struct Node* integerDeclaration() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = DEFINE_NODE;
-    e->valueType = INTEGER;
+    e->nodeUnion.asignDefineNode.valueType = INTEGER;
 
-    e->name = name();
+    e->nodeUnion.asignDefineNode.name = name();
 
     if(peek().tokenType == ASIGN_TOKEN){
         asign();
-        e->expression = expression();
+        e->nodeUnion.asignDefineNode.expression = expression();
     } else {
-        e->expression = malloc(sizeof(struct Node));
-        e->expression->nodeType = VALUE_NODE;
-        e->expression->value.integerValue = 0;
-        e->expression->valueType = INTEGER;
+        e->nodeUnion.asignDefineNode.expression = malloc(sizeof(struct Node));
+        e->nodeUnion.asignDefineNode.expression->nodeType = VALUE_NODE;
+        e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.value.integerValue = 0;
+        e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.valueType = INTEGER;
     }
 
     return e;
@@ -549,18 +550,18 @@ struct Node* decimalDeclaration() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = DEFINE_NODE;
-    e->valueType = DECIMAL;
+    e->nodeUnion.asignDefineNode.valueType = DECIMAL;
 
-    e->name = name();
+    e->nodeUnion.asignDefineNode.name = name();
 
     if(peek().tokenType == ASIGN_TOKEN){
         asign();
-        e->expression = expression();
+        e->nodeUnion.asignDefineNode.expression = expression();
     } else {
-        e->expression = malloc(sizeof(struct Node));
-        e->expression->nodeType = VALUE_NODE;
-        e->expression->value.integerValue = 0;
-        e->expression->valueType = DECIMAL;
+        e->nodeUnion.asignDefineNode.expression = malloc(sizeof(struct Node));
+        e->nodeUnion.asignDefineNode.expression->nodeType = VALUE_NODE;
+        e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.value.integerValue = 0;
+        e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.valueType = DECIMAL;
     }
 
     return e;
@@ -582,18 +583,18 @@ struct Node* booleanDeclaration() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = DEFINE_NODE;
-    e->valueType = BOOLEAN;
+    e->nodeUnion.asignDefineNode.valueType = BOOLEAN;
 
-    e->name = name();
+    e->nodeUnion.asignDefineNode.name = name();
 
     if(peek().tokenType == ASIGN_TOKEN){
         asign();
-        e->expression = expression();
+        e->nodeUnion.asignDefineNode.expression = expression();
     } else {
-        e->expression = malloc(sizeof(struct Node));
-        e->expression->nodeType = VALUE_NODE;
-        e->expression->value.integerValue = 0;
-        e->expression->valueType = BOOLEAN;
+        e->nodeUnion.asignDefineNode.expression = malloc(sizeof(struct Node));
+        e->nodeUnion.asignDefineNode.expression->nodeType = VALUE_NODE;
+        e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.value.integerValue = 0;
+        e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.valueType = BOOLEAN;
     }
 
     return e;
@@ -665,9 +666,9 @@ struct Node* whileDescend() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = WHILE_NODE;
-    e->statements = NULL;
+    e->nodeUnion.whileNode.statements = NULL;
 
-    e->condition = expression();
+    e->nodeUnion.whileNode.condition = expression();
 
     colon();
 
@@ -684,7 +685,7 @@ struct Node* returnDescend(){
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = RETURN_NODE;
-    e->expression = expression();
+    e->nodeUnion.returnNode.expression = expression();
 
     return e;
 }
@@ -700,38 +701,38 @@ struct Node* functionDeclaration() {
 
     struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = FUNCTION_DECLARATION_NODE;
-    e->statements = NULL;
-    e->arguments = NULL;
-    e->retutnType = NULL_TYPE_VALUE;
+    e->nodeUnion.functionDeclarationNode.statements = NULL;
+    e->nodeUnion.functionDeclarationNode.arguments = NULL;
+    e->nodeUnion.functionDeclarationNode.retutnType = NULL_TYPE_VALUE;
 
     if(peek().tokenType == NAME_TOKEN){
-        e->name = name();
+        e->nodeUnion.functionDeclarationNode.name = name();
     } else {
         token = eat();
         if(token.tokenType != FUNCTION_CALL_TOKEN){
             wrongTokenPrint("FUNCTION CALL", token);
             return NULL;
         }
-        e->name = g_strdup(token.value);
+        e->nodeUnion.functionDeclarationNode.name = g_strdup(token.value);
     }
 
     leftP();
 
 	if(peek().tokenType != RIGHT_P_TOKEN){
-		e->arguments = g_list_append(e->arguments, declaration());
+		e->nodeUnion.functionDeclarationNode.arguments = g_list_append(e->nodeUnion.functionDeclarationNode.arguments, declaration());
 	}
 
 	while (peek().tokenType != RIGHT_P_TOKEN)
     {	
 		coma();
-        e->arguments = g_list_append(e->arguments, declaration());
+        e->nodeUnion.functionDeclarationNode.arguments = g_list_append(e->nodeUnion.functionDeclarationNode.arguments, declaration());
     }
 
     rightP();
 
     if(peek().tokenType == ARROW_TOKEN){
         eat();
-        e->retutnType = type();
+        e->nodeUnion.functionDeclarationNode.retutnType = type();
     }
 
     colon();
@@ -758,17 +759,17 @@ struct Node* functionCall() {
     node->nodeType = FUNCTION_CALL_NODE;
     //node->name = malloc(sizeof(token.value));
     //strncpy(node->name, token.value, strlen(token.value));
-    node->name = g_strdup(token.value);
-    node->arguments = NULL;
+    node->nodeUnion.functionCallNode.name = g_strdup(token.value);
+    node->nodeUnion.functionCallNode.arguments = NULL;
 
 	if(peek().tokenType != RIGHT_P_TOKEN){
-        node->arguments = g_list_append(node->arguments, expression());
+        node->nodeUnion.functionCallNode.arguments = g_list_append(node->nodeUnion.functionCallNode.arguments, expression());
 	}
 
 	while (peek().tokenType != RIGHT_P_TOKEN)
     {	
 		coma();
-        node->arguments = g_list_append(node->arguments, expression());
+        node->nodeUnion.functionCallNode.arguments = g_list_append(node->nodeUnion.functionCallNode.arguments, expression());
     }
 
     rightP();
@@ -805,13 +806,16 @@ struct Node* statement() {
         break;
     case NAME_TOKEN:
         e = malloc(sizeof(struct Node));
-        e->name = name();
+        //e->name = name();
+        char *tmpName = name();
         if(peek().tokenType == ASIGN_TOKEN){
             e->nodeType = ASIGN_NODE;
+            e->nodeUnion.asignDefineNode.name = tmpName;
             asign();
-            e->expression = expression();
+            e->nodeUnion.asignDefineNode.expression = expression();
         } else {
             e->nodeType = VARIABLE_NODE;
+            e->nodeUnion.variableNode.name = tmpName;
             struct Node* tmp = e;
             e = handleInfix(tmp);
         }
