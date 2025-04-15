@@ -89,8 +89,8 @@ struct StatementsNode {
 
 struct IfNode {
     struct Node* condition;
-    struct Node* left;
-    struct Node* right;
+    struct Node* ifBody;
+    struct Node* elseBody;
 };
 
 struct NotNode {

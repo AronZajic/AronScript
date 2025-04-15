@@ -106,8 +106,6 @@ int match(char src[], char s[], char separators[], int skip){
 
 int matchNumber(char src[], char *dest, char separators[]){
 
-    //printf("match number\n");
-
     int i = 0;
     while (src_i+i < strlen(src) && '0' <= src[src_i+i] && src[src_i+i] <= '9')
     {
@@ -139,8 +137,6 @@ int matchNumber(char src[], char *dest, char separators[]){
 }
 
 int matchName(char src[], char *dest, char separators[]){
-
-    //printf("match name\n");
 
     int i = 0;
     while (
@@ -178,8 +174,6 @@ int matchName(char src[], char *dest, char separators[]){
 
 int tokenize(char src[], struct Token tokens[]){
 
-    //printf("%s\n", src);
-
     src_i = 0;
     token_i = 0;
 
@@ -196,9 +190,6 @@ int tokenize(char src[], struct Token tokens[]){
 
     while(src_i < strlen(src)){
 
-        //printf("%d %d %d\n", strlen(src), src_i, token_i);
-
-        // we will see if we need this, probably will for robustness
         if(match(src, "\t", NULL, 0)){
             continue;
         }
@@ -394,48 +385,32 @@ int tokenize(char src[], struct Token tokens[]){
             continue;
         }
 
-        //char *number;
-
         if(matchNumber(src, tokens[token_i].value, ".")){
             tokens[token_i].tokenType = DECIMAL_VALUE_TOKEN;
-            //tokens[token_i].value = number;
             token_i++;
             continue;
         }
 
         if(matchNumber(src, tokens[token_i].value, NULL)){
             tokens[token_i].tokenType = INTEGER_VALUE_TOKEN;
-            //tokens[token_i].value = number;
             token_i++;
             continue;
         }
 
         if(matchName(src, tokens[token_i].value, "(")){
             tokens[token_i].tokenType = FUNCTION_CALL_TOKEN;
-            //tokens[token_i].value = number;
             token_i++;
             continue;
         }
 
         if(matchName(src, tokens[token_i].value, NULL)){
             tokens[token_i].tokenType = NAME_TOKEN;
-            //tokens[token_i].value = number;
             token_i++;
             continue;
         }
 
         fprintf(stderr, "Input coud not be tokenized.\n");
         return 0;
-
-        /*for(int j = 0; j < 10; j++){
-
-            struct Token token = tokens[j];
-    
-            fprintf(stderr, "( %c, %c, %d, %d ), ", token.tokenType, token.value, token.value, j);
-    
-        }
-        return 0;*/
-
     }
 
     tokens[token_i++].tokenType = END_TOKEN;

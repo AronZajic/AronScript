@@ -121,10 +121,10 @@ void freeNode(void *n){
 	if(node->nodeType == IF_NODE){
 		if(node->nodeUnion.ifNode.condition != NULL)
 			freeNode(node->nodeUnion.ifNode.condition);
-		if(node->nodeUnion.ifNode.left != NULL)
-			freeNode(node->nodeUnion.ifNode.left);
-		if(node->nodeUnion.ifNode.right != NULL)
-			freeNode(node->nodeUnion.ifNode.right);
+		if(node->nodeUnion.ifNode.ifBody != NULL)
+			freeNode(node->nodeUnion.ifNode.ifBody);
+		if(node->nodeUnion.ifNode.elseBody != NULL)
+			freeNode(node->nodeUnion.ifNode.elseBody);
 	}
 
 	if(node->nodeType == DEFINE_NODE || node->nodeType == ASIGN_NODE){
@@ -601,11 +601,11 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(eval(node->nodeUnion.ifNode.condition, context).value.integerValue){
 			//struct EvalNode evalNodeTmp = evalWithFreshContext(node->left, context);
 			//return evalNodeTmp;
-			return evalWithFreshContext(node->nodeUnion.ifNode.left, context);
-		} else if(node->nodeUnion.ifNode.right != NULL) {
+			return evalWithFreshContext(node->nodeUnion.ifNode.ifBody, context);
+		} else if(node->nodeUnion.ifNode.elseBody != NULL) {
 			//struct EvalNode evalNodeTmp = evalWithFreshContext(node->right, context);
 			//return evalNodeTmp;
-			return evalWithFreshContext(node->nodeUnion.ifNode.right, context);
+			return evalWithFreshContext(node->nodeUnion.ifNode.elseBody, context);
 		}
 		return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 	}

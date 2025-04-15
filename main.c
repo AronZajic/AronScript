@@ -232,35 +232,35 @@ struct Node* read_file(FILE *file, struct Node *parent){
 			}
 
 			if(node->nodeType == IF_NODE){
-				node->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
-				node->nodeUnion.ifNode.left->indentation = node->indentation;
-				node->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
-				node->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
-				node->nodeUnion.ifNode.right = NULL;
+				node->nodeUnion.ifNode.ifBody = malloc(sizeof(struct Node));
+				node->nodeUnion.ifNode.ifBody->indentation = node->indentation;
+				node->nodeUnion.ifNode.ifBody->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.ifNode.ifBody->nodeUnion.statementsNode.body = NULL;
+				node->nodeUnion.ifNode.elseBody = NULL;
 
-				struct Node* tmp = read_file(file, node->nodeUnion.ifNode.left);
+				struct Node* tmp = read_file(file, node->nodeUnion.ifNode.ifBody);
 				struct Node* tmpDescend = node;
 
 				while(tmp != NULL && tmp->nodeType == ELSE_IF_NODE){
-					tmpDescend->nodeUnion.ifNode.right = tmp;
-					tmpDescend->nodeUnion.ifNode.right->nodeType = IF_NODE;
+					tmpDescend->nodeUnion.ifNode.elseBody = tmp;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeType = IF_NODE;
 
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->indentation = tmpDescend->indentation;
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->indentation = tmpDescend->indentation;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->nodeUnion.statementsNode.body = NULL;
 
-					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left);
-					tmpDescend = tmpDescend->nodeUnion.ifNode.right;
+					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody);
+					tmpDescend = tmpDescend->nodeUnion.ifNode.elseBody;
 				}
 
 				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
-					tmpDescend->nodeUnion.ifNode.right = malloc(sizeof(struct Node));
-					tmpDescend->nodeUnion.ifNode.right->indentation = node->indentation;
-					tmpDescend->nodeUnion.ifNode.right->nodeType = STATEMENTS_NODE;
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.statementsNode.body = NULL;
+					tmpDescend->nodeUnion.ifNode.elseBody = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.elseBody->indentation = node->indentation;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.statementsNode.body = NULL;
 					free(tmp);
-					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.right);
+					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.elseBody);
 				}
 				node = tmp;
 				goto placeNode;
@@ -322,35 +322,35 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 			}
 
 			if(node->nodeType == IF_NODE){
-				node->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
-				node->nodeUnion.ifNode.left->indentation = node->indentation;
-				node->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
-				node->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
-				node->nodeUnion.ifNode.right = NULL;
+				node->nodeUnion.ifNode.ifBody = malloc(sizeof(struct Node));
+				node->nodeUnion.ifNode.ifBody->indentation = node->indentation;
+				node->nodeUnion.ifNode.ifBody->nodeType = STATEMENTS_NODE;
+				node->nodeUnion.ifNode.ifBody->nodeUnion.statementsNode.body = NULL;
+				node->nodeUnion.ifNode.elseBody = NULL;
 
-				struct Node* tmp = replRead(node->nodeUnion.ifNode.left, ";");
+				struct Node* tmp = replRead(node->nodeUnion.ifNode.ifBody, ";");
 				struct Node* tmpDescend = node;
 
 				while(tmp != NULL && tmp->nodeType == ELSE_IF_NODE){
-					tmpDescend->nodeUnion.ifNode.right = tmp;
-					tmpDescend->nodeUnion.ifNode.right->nodeType = IF_NODE;
+					tmpDescend->nodeUnion.ifNode.elseBody = tmp;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeType = IF_NODE;
 
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left = malloc(sizeof(struct Node));
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->indentation = tmpDescend->indentation;
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeType = STATEMENTS_NODE;
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left->nodeUnion.statementsNode.body = NULL;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->indentation = tmpDescend->indentation;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->nodeUnion.statementsNode.body = NULL;
 
-					tmp = replRead(tmpDescend->nodeUnion.ifNode.right->nodeUnion.ifNode.left, ";");
-					tmpDescend = tmpDescend->nodeUnion.ifNode.right;
+					tmp = replRead(tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody, ";");
+					tmpDescend = tmpDescend->nodeUnion.ifNode.elseBody;
 				}
 
 				if(tmp != NULL && tmp->nodeType == ELSE_NODE){
-					tmpDescend->nodeUnion.ifNode.right = malloc(sizeof(struct Node));
-					tmpDescend->nodeUnion.ifNode.right->indentation = node->indentation;
-					tmpDescend->nodeUnion.ifNode.right->nodeType = STATEMENTS_NODE;
-					tmpDescend->nodeUnion.ifNode.right->nodeUnion.statementsNode.body = NULL;
+					tmpDescend->nodeUnion.ifNode.elseBody = malloc(sizeof(struct Node));
+					tmpDescend->nodeUnion.ifNode.elseBody->indentation = node->indentation;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeType = STATEMENTS_NODE;
+					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.statementsNode.body = NULL;
 					free(tmp);
-					tmp = replRead(tmpDescend->nodeUnion.ifNode.right, ";");
+					tmp = replRead(tmpDescend->nodeUnion.ifNode.elseBody, ";");
 				}
 				node = tmp;
 				goto placeNode;
