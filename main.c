@@ -424,7 +424,7 @@ int main(int argc, char **argv) {
 
 		readFile(file, program);
 
-		lint(program, context);
+		lint(program, context, NULL);
 
 		fclose(file);
 	} else {

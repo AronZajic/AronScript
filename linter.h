@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include "interpreter.h"
 
-struct EvalNode lintWithFreshContext(struct Node* node, struct Context *context);
+struct EvalNode lintWithFreshContext(struct Node* node, struct Context *context, struct Node* funNode);
 
-struct EvalNode lint(struct Node* node, struct Context *context){
+struct EvalNode lint(struct Node* node, struct Context *context, struct Node* funNode){
 
 	if(node == NULL){
 		return (struct EvalNode){.evalType=NULL_TYPE};
@@ -39,7 +39,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 	}
 
 	if(node->nodeType == NOT_NODE){
-		struct EvalNode tmp = lint(node->nodeUnion.notNode.expression, context);
+		struct EvalNode tmp = lint(node->nodeUnion.notNode.expression, context, funNode);
 
 		if(tmp.evalType == NULL_TYPE){
 			fprintf(stderr, "Got NULL value as input to not.\n");
@@ -89,25 +89,10 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 			listIteratorDefinition = listIteratorDefinition->next;
 		}
 
-		struct EvalNode tmp = lint(node->nodeUnion.functionDeclarationNode.statements, &contextInFunction);
+		lint(node->nodeUnion.functionDeclarationNode.statements, &contextInFunction, node);
 
 		g_hash_table_destroy(contextInFunction.variables);
 		g_hash_table_destroy(contextInFunction.functions);
-
-		if(tmp.evalType == NULL_TYPE && node->nodeUnion.functionDeclarationNode.retutnType != NULL_TYPE_VALUE){
-			fprintf(stderr, "Function %s is returning NULL but has return type of %s.\n", node->nodeUnion.functionDeclarationNode.name, getValueTypeString(node->nodeUnion.functionDeclarationNode.retutnType));
-			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
-		}
-
-		if(tmp.evalType == RETURN_TYPE && node->nodeUnion.functionDeclarationNode.retutnType == NULL_TYPE_VALUE){
-			fprintf(stderr, "Function %s is returning not NULL but has return type of %s.\n", node->nodeUnion.functionDeclarationNode.name, getValueTypeString(node->nodeUnion.functionDeclarationNode.retutnType));
-			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
-		}
-
-		if(tmp.evalType != NULL_TYPE && tmp.valueType != node->nodeUnion.functionDeclarationNode.retutnType){
-			fprintf(stderr, "Function %s is returning %s but has return type of %s.\n", node->nodeUnion.functionDeclarationNode.name, getValueTypeString(tmp.valueType), getValueTypeString(node->nodeUnion.functionDeclarationNode.retutnType));
-			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
-		}
 
 		return (struct EvalNode){.evalType=NULL_TYPE};
 	}
@@ -143,7 +128,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 			struct Node *argumentFunction = (struct Node*)listIteratorDefinition->data;
 
 			struct EvalNode *evalValue = malloc(sizeof(struct EvalNode));
-			*evalValue = lint(argumentCall, context);
+			*evalValue = lint(argumentCall, context, funNode);
 
 			if(evalValue->evalType == NULL_TYPE){
 				fprintf(stderr, "Error, got NULL type as function call argument at position %d.\n", i);
@@ -166,14 +151,22 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 	}
 
 	if(node->nodeType == RETURN_NODE){
-		struct EvalNode tmp = lint(node->nodeUnion.returnNode.expression, context);
+		struct EvalNode tmp = lint(node->nodeUnion.returnNode.expression, context, funNode);
+
+		if(funNode != NULL){
+			if(tmp.valueType != funNode->nodeUnion.functionDeclarationNode.retutnType){
+				fprintf(stderr, "Function %s is returning %s but has return type of %s.\n", funNode->nodeUnion.functionDeclarationNode.name, getValueTypeString(tmp.valueType), getValueTypeString(funNode->nodeUnion.functionDeclarationNode.retutnType));
+				fprintf(stderr, "At line \"%s\" column %d.\n", funNode->line, funNode->column);
+			}
+		}
+
 		return (struct EvalNode){.evalType=RETURN_TYPE, .valueType=tmp.valueType};
 	}
 
 	if(node->nodeType == BINARY_OPERATION_NODE){
 
-        struct EvalNode left = lint(node->nodeUnion.binaryOperationNode.left, context);
-        struct EvalNode right = lint(node->nodeUnion.binaryOperationNode.right, context);
+        struct EvalNode left = lint(node->nodeUnion.binaryOperationNode.left, context, funNode);
+        struct EvalNode right = lint(node->nodeUnion.binaryOperationNode.right, context, funNode);
 
 		if(left.evalType != VALUE_TYPE ||  right.evalType != VALUE_TYPE){
             fprintf(stderr, "Left or right side of binary operation is not VALUE type. Left is %s. Right is %s.\n", getEvalTypeString(left.evalType), getEvalTypeString(right.evalType));
@@ -286,7 +279,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
-		*tmpExpression = lint(node->nodeUnion.asignDefineNode.expression, context);
+		*tmpExpression = lint(node->nodeUnion.asignDefineNode.expression, context, funNode);
 
 		if(tmpExpression->evalType == NULL_TYPE){
 			fprintf(stderr, "Right side of declaration is NULL.\n");
@@ -314,7 +307,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
-		*tmpExpression = lint(node->nodeUnion.asignDefineNode.expression, context);
+		*tmpExpression = lint(node->nodeUnion.asignDefineNode.expression, context, funNode);
 
 		if(tmpExpression->evalType == NULL_TYPE){
 			fprintf(stderr, "Right side of asignment is NULL.\n");
@@ -337,40 +330,28 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 	}
 
 	if(node->nodeType == WHILE_NODE){
-		lint(node->nodeUnion.whileNode.condition, context);
-		struct EvalNode evalNodeTmp = lintWithFreshContext(node->nodeUnion.whileNode.statements, context);
 
-		if(evalNodeTmp.evalType == RETURN_TYPE){
-			return evalNodeTmp;
-		}
+		lint(node->nodeUnion.whileNode.condition, context, funNode);
+
+		lintWithFreshContext(node->nodeUnion.whileNode.statements, context, funNode);
 
 		return (struct EvalNode){.evalType=NULL_TYPE};
 	}
 
 	if(node->nodeType == IF_NODE){
 
-		lint(node->nodeUnion.ifNode.condition, context);
-		struct EvalNode evalNodeTmp = lintWithFreshContext(node->nodeUnion.ifNode.ifBody, context);
+		lint(node->nodeUnion.ifNode.condition, context, funNode);
 
-		if(evalNodeTmp.evalType == RETURN_TYPE){
-			return evalNodeTmp;
-		}
+		lintWithFreshContext(node->nodeUnion.ifNode.ifBody, context, funNode);
 
-		evalNodeTmp = lintWithFreshContext(node->nodeUnion.ifNode.elseBody, context);
-
-		if(evalNodeTmp.evalType == RETURN_TYPE){
-			return evalNodeTmp;
-		}
+		lintWithFreshContext(node->nodeUnion.ifNode.elseBody, context, funNode);
 
 		return (struct EvalNode){.evalType=NULL_TYPE};
 	}
 
 	if(node->nodeType == STATEMENTS_NODE){
 		for (GList *listIterator = node->nodeUnion.statementsNode.body; listIterator != NULL; listIterator = listIterator->next) {
-			struct EvalNode evalNodeTmp = lint(listIterator->data, context);
-			if(evalNodeTmp.evalType == RETURN_TYPE){
-				return evalNodeTmp;
-			}
+			lint(listIterator->data, context, funNode);
 		}
 		return (struct EvalNode){.evalType=NULL_TYPE};
 	}
@@ -380,7 +361,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 	return (struct EvalNode){.evalType=NULL_TYPE};
 }
 
-struct EvalNode lintWithFreshContext(struct Node* node, struct Context *context){
+struct EvalNode lintWithFreshContext(struct Node* node, struct Context *context, struct Node* funNode){
 	GHashTable *contextVariablesNew = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
 	GHashTable *contextFunctionsNew = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, freeFunctionDeclaration);
 
@@ -389,7 +370,7 @@ struct EvalNode lintWithFreshContext(struct Node* node, struct Context *context)
 	contextNew->variables = contextVariablesNew;
 	contextNew->functions = contextFunctionsNew;
 
-	struct EvalNode evalNodeTmp = lint(node, contextNew);
+	struct EvalNode evalNodeTmp = lint(node, contextNew, funNode);
 
 	g_hash_table_destroy(contextVariablesNew);
 	g_hash_table_destroy(contextFunctionsNew);
