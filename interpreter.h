@@ -11,6 +11,24 @@ enum EvalType {
 	RETURN_TYPE = 'R'
 };
 
+char* getEvalTypeString(enum EvalType evalType){
+    switch (evalType)
+    {
+    case VALUE_TYPE:
+        return "VALUE";
+    case NULL_TYPE:
+        return "NULL";
+    case BREAK_TYPE:
+        return "BREAK";
+    case CONTINUE_TYPE:
+        return "CONTINUE";
+    case RETURN_TYPE:
+        return "RETURN";
+    default:
+        return NULL;
+    }
+}
+
 struct EvalNode {
 	enum EvalType evalType;
 	enum ValueType valueType;
@@ -200,6 +218,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(!contextVariablesContains(context, node->nodeUnion.variableNode.name)){
 			fprintf(stderr, "Variable with the name \"%s\" does not exist.\n", node->nodeUnion.variableNode.name);
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 		
@@ -215,12 +236,18 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(tmp.evalType == NULL_TYPE){
 			fprintf(stderr, "Got NULL value as input to not.\n");
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
 		if(tmp.valueType != BOOLEAN){
-			fprintf(stderr, "Got %c type as input to not. Input to not has to be Boolean.\n", tmp.valueType);
+			fprintf(stderr, "Got %s type as input to not. Input to not has to be Boolean.\n", getValueTypeString(tmp.valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -232,6 +259,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		//if(contextFunctionsContains(context, node->name)){
 			fprintf(stderr, "Function %s already defined.\n", node->nodeUnion.functionDeclarationNode.name);
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -245,6 +275,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(!contextFunctionsContains(context, node->nodeUnion.functionCallNode.name)){
 			fprintf(stderr, "Function with the name \"%s\" does not exist.\n", node->nodeUnion.functionCallNode.name);
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -265,6 +298,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(nodeArgsLen != functionDefinitionArgsLen){
 			fprintf(stderr, "Wrong number of arguments. Function \"%s\" takes %d argumet(s).\n", node->nodeUnion.functionCallNode.name, functionDefinitionArgsLen);
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 		}
 
 		GList *listIteratorNode = node->nodeUnion.functionCallNode.arguments;
@@ -283,12 +319,18 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			if(evalValue->evalType == NULL_TYPE){
 				fprintf(stderr, "Error, got NULL type as function call argument at position %d.\n", i);
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 
 			if(argumentFunction->nodeUnion.asignDefineNode.valueType != evalValue->valueType){
-				fprintf(stderr, "Wrong type of argument, got type %c. Function \"%s\" takes argumet of type %c at postion %d.\n", evalValue->valueType, node->nodeUnion.functionCallNode.name, argumentFunction->nodeUnion.asignDefineNode.valueType, i);
+				fprintf(stderr, "Wrong type of argument, got type %s. Function \"%s\" takes argumet of type %s at postion %d.\n", getValueTypeString(evalValue->valueType), node->nodeUnion.functionCallNode.name, getValueTypeString(argumentFunction->nodeUnion.asignDefineNode.valueType), i);
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 
@@ -352,8 +394,11 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			g_hash_table_destroy(contextInFunction.functions);
 
 			if(evalNodeTmp.valueType != functionDefinition->nodeUnion.functionDeclarationNode.retutnType){
-				fprintf(stderr, "Wrong return type %c. Function \"%s\" return type %c.\n", evalNodeTmp.valueType, node->nodeUnion.functionCallNode.name, functionDefinition->nodeUnion.functionDeclarationNode.retutnType);
+				fprintf(stderr, "Wrong return type %s. Function \"%s\" return type %s.\n", getValueTypeString(evalNodeTmp.valueType), node->nodeUnion.functionCallNode.name, getValueTypeString(functionDefinition->nodeUnion.functionDeclarationNode.retutnType));
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 			}
 
 			return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=functionDefinition->nodeUnion.functionDeclarationNode.retutnType, .value.integerValue=evalNodeTmp.value.integerValue};
@@ -375,21 +420,21 @@ struct EvalNode eval(struct Node* node, struct Context *context){
         struct EvalNode left = eval(node->nodeUnion.binaryOperationNode.left, context);
         struct EvalNode right = eval(node->nodeUnion.binaryOperationNode.right, context);
 
-		if(left.evalType == NULL_TYPE || right.evalType == NULL_TYPE){
-            fprintf(stderr, "Left or right side of binary operation is Null. Left is %c. Right is %c.\n", left.evalType, right.evalType);
-			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
-            return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
-        }
-
 		if(left.evalType != VALUE_TYPE ||  right.evalType != VALUE_TYPE){
-            fprintf(stderr, "Left or right side of binary operation is not VALUE type. Left is %c. Right is %c.\n", left.evalType, right.evalType);
+            fprintf(stderr, "Left or right side of binary operation is not VALUE type. Left is %s. Right is %s.\n", getEvalTypeString(left.evalType), getEvalTypeString(right.evalType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
             return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
         }
 
 		if(left.valueType != ZERO && left.valueType != right.valueType){
-            fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.valueType, right.valueType);
+            fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %s. Right is %s.\n", getValueTypeString(left.valueType), getValueTypeString(right.valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
             return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
         }
 
@@ -443,6 +488,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 		}
@@ -490,11 +538,17 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			case REMAINDER:
 				fprintf(stderr, "Decimal types do not support %% operation.\n");
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 		}
@@ -526,11 +580,17 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			case REMAINDER:
 				fprintf(stderr, "BOOLEAN types do not support <, >, <=, >= and aritmetic operations.\n");
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				if(!runningAsREPL){
+					exit(EXIT_FAILURE);
+				}
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 		}
@@ -543,6 +603,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		//if(contextVariablesContains(context, node->name)){
 			fprintf(stderr, "Variable %s already defined.\n", node->nodeUnion.asignDefineNode.name);
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -552,12 +615,18 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(tmpExpression->evalType == NULL_TYPE){
 			fprintf(stderr, "Right side of declaration is NULL.\n");
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
 		if(tmpExpression->valueType != node->nodeUnion.asignDefineNode.valueType){
-			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->nodeUnion.asignDefineNode.valueType, tmpExpression->valueType);
+			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %s. Right is %s.\n", getValueTypeString(node->nodeUnion.asignDefineNode.valueType), getValueTypeString(tmpExpression->valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -571,6 +640,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(!contextVariablesContains(context, node->nodeUnion.asignDefineNode.name)){
 			fprintf(stderr, "Variable %s not defined.\n", node->nodeUnion.asignDefineNode.name);
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -580,6 +652,9 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(tmpExpression->evalType == NULL_TYPE){
 			fprintf(stderr, "Right side of asignment is NULL.\n");
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -587,8 +662,11 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		struct EvalNode *tmpVariable = contextGetVariable(context, node->nodeUnion.asignDefineNode.name);
 
 		if(tmpExpression->valueType != tmpVariable->valueType){
-			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
+			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %s. Right is %s.\n", getValueTypeString(tmpVariable->valueType), getValueTypeString(tmpExpression->valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			if(!runningAsREPL){
+				exit(EXIT_FAILURE);
+			}
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -642,8 +720,11 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 	}
 
-	fprintf(stderr, "ERROR! NODE TYPE %c %d NOT IMPLEMENTED!\n", node->nodeType, node->nodeType);
+	fprintf(stderr, "ERROR! NODE TYPE NOT IMPLEMENTED!\n");
 	fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+	if(!runningAsREPL){
+        exit(EXIT_FAILURE);
+    }
 	return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 }
 

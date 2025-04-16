@@ -5,6 +5,8 @@ struct Token tokens[128];
 
 int token_i_parser = 0;
 
+int runningAsREPL;
+
 struct Token peek(){
     return tokens[token_i_parser];
 }
@@ -15,10 +17,30 @@ struct Token eat(){
     return token; 
 }
 
+char* getValueTypeString(enum ValueType valueType){
+    switch (valueType)
+    {
+    case INTEGER:
+        return "INTEGER";
+    case DECIMAL:
+        return "DECIMAL";
+    case BOOLEAN:
+        return "BOOLEAN";
+    case ZERO:
+        return "ZERO";
+    case NULL_TYPE_VALUE:
+        return "NULL_TYPE";
+    default:
+        return NULL;
+    }
+}
+
 void wrongTokenPrint(char expected[], struct Token token){
 	fprintf(stderr, "\nWrong token! %s token expected, got %s.\n", expected, getTokenString(token.tokenType));
     fprintf(stderr, "At line \"%s\" column %d.\n", token.line, token.column);
-    exit(EXIT_FAILURE);
+    if(!runningAsREPL){
+        exit(EXIT_FAILURE);
+    }
 }
 
 struct Node* colon(){
@@ -238,10 +260,16 @@ struct Node* negation() {
     case INTEGER_VALUE_TOKEN:
         fprintf(stderr, "Integer value can not be negated.");
         fprintf(stderr, "At line \"%s\" column %d.\n", peek().line, peek().column);
+        if(!runningAsREPL){
+            exit(EXIT_FAILURE);
+        }
         return NULL;
     case DECIMAL_VALUE_TOKEN:
         fprintf(stderr, "Decimal value can not be negated.");
         fprintf(stderr, "At line \"%s\" column %d.\n", peek().line, peek().column);
+        if(!runningAsREPL){
+            exit(EXIT_FAILURE);
+        }
         return NULL;
     case TRUE_TOKEN:
     case FALSE_TOKEN:
@@ -263,6 +291,9 @@ struct Node* negation() {
         break;
     default:
         fprintf(stderr, "Could not parse expression at line \"%s\" column %d.\n", peek().line, peek().column);
+        if(!runningAsREPL){
+            exit(EXIT_FAILURE);
+        }
         return NULL;
     }
 
@@ -312,6 +343,9 @@ struct Node* expression() {
         if(!(peek().value[0] == MINUS || peek().value[0] == PLUS)){
             fprintf(stderr, "Expression can only start with BINARY_OPERATION PLUS or MINUS.");
             fprintf(stderr, "At line \"%s\" column %d.\n", peek().line, peek().column);
+            if(!runningAsREPL){
+                exit(EXIT_FAILURE);
+            }
             e = NULL;
             break;
         }
@@ -333,6 +367,9 @@ struct Node* expression() {
         break;
     default:
         fprintf(stderr, "Could not parse expression at line \"%s\" column %d.\n", peek().line, peek().column);
+        if(!runningAsREPL){
+            exit(EXIT_FAILURE);
+        }
         break;
     }
 
@@ -367,6 +404,9 @@ void infixHelper(struct Node* dest){
         break;
     default:
         fprintf(stderr, "Could not parse expression at line \"%s\" column %d.\n", peek().line, peek().column);
+        if(!runningAsREPL){
+            exit(EXIT_FAILURE);
+        }
         dest = NULL;
     }
 }
@@ -859,7 +899,10 @@ struct Node* statement() {
         e = continueNode();
         break;
     default:
-        fprintf(stderr, "Could not parse statement at %c %p.\n", peek().tokenType, peek().value);
+        fprintf(stderr, "Could not parse statement at line \"%s\" column %d.\n", peek().line, peek().column);
+        if(!runningAsREPL){
+            exit(EXIT_FAILURE);
+        }
         e = NULL;
         break;
     }
@@ -891,6 +934,9 @@ struct Node* parse(char* src){
     if(!(e != NULL && end())){
         fprintf(stderr, "\nParsing not succesfull.\n");
         fprintf(stderr, "At line \"%s\".\n", src);
+        if(!runningAsREPL){
+            exit(EXIT_FAILURE);
+        }
         return NULL;
     }
 

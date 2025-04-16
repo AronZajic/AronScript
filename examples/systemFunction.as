@@ -9,3 +9,7 @@ printLineDecimal(y)
 Boolean z = True
 
 printLineBoolean(z)
+
+printInteger(x)
+printDecimal(y)
+printBoolean(z)

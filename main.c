@@ -45,8 +45,6 @@ int replPrint(struct Node* node, struct Context *context){
 			return 0;
 		}
 
-		//printf("got type %c:", evalNode.valueType);
-
 		if(evalNode.valueType == INTEGER){
 			printf("=%d\n", evalNode.value.integerValue);
 		}
@@ -80,7 +78,7 @@ int replPrint(struct Node* node, struct Context *context){
 		}
 
 		if(tmpExpression->valueType != node->nodeUnion.asignDefineNode.valueType){
-			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->nodeUnion.asignDefineNode.valueType, tmpExpression->valueType);
+			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %s. Right is %s.\n", getValueTypeString(node->nodeUnion.asignDefineNode.valueType), getValueTypeString(tmpExpression->valueType));
 			return 0;
 		}
 
@@ -121,7 +119,7 @@ int replPrint(struct Node* node, struct Context *context){
 		struct EvalNode *tmpVariable = g_hash_table_lookup(context->variables, node->nodeUnion.asignDefineNode.name);
 
 		if(tmpExpression->valueType != tmpVariable->valueType){
-			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
+			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %s. Right is %s.\n", getValueTypeString(tmpVariable->valueType), getValueTypeString(tmpExpression->valueType));
 			return 0;
 		}
 
@@ -270,7 +268,6 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 			if(node->indentation > parent->indentation + 1){
 				fprintf(stderr, "Wrong indentation!");
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
-                // TODO delete already loaded data and not execute further
 			}
 
 			if(node->indentation < parent->indentation + 1){
@@ -372,6 +369,8 @@ int main(int argc, char **argv) {
 
 	if(argc == 1){
 
+		runningAsREPL = 1;
+
 		while (1)
 		{
 
@@ -383,6 +382,8 @@ int main(int argc, char **argv) {
 				replPrint(program->nodeUnion.statementsNode.body->data, context);
 		}
 	} else if(argc == 2) {
+
+		runningAsREPL = 0;
 
 		FILE *file;
 
@@ -400,6 +401,8 @@ int main(int argc, char **argv) {
 
 		fclose(file);
 	} else if(argc == 3){
+
+		runningAsREPL = 0;
 
 		if(strcmp(argv[1], "check") != 0){
 			fprintf(stderr, "Wrong program arguments.\n");

@@ -48,7 +48,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 		}
 
 		if(tmp.valueType != BOOLEAN){
-			fprintf(stderr, "Got %c type as input to not. Input to not has to be Boolean.\n", tmp.valueType);
+			fprintf(stderr, "Got %s type as input to not. Input to not has to be Boolean.\n", getValueTypeString(tmp.valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE};
 		}
@@ -95,17 +95,17 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 		g_hash_table_destroy(contextInFunction.functions);
 
 		if(tmp.evalType == NULL_TYPE && node->nodeUnion.functionDeclarationNode.retutnType != NULL_TYPE_VALUE){
-			fprintf(stderr, "Function %s is returning NULL but has return type of %c.\n", node->nodeUnion.functionDeclarationNode.name, node->nodeUnion.functionDeclarationNode.retutnType);
+			fprintf(stderr, "Function %s is returning NULL but has return type of %s.\n", node->nodeUnion.functionDeclarationNode.name, getValueTypeString(node->nodeUnion.functionDeclarationNode.retutnType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 		}
 
 		if(tmp.evalType == RETURN_TYPE && node->nodeUnion.functionDeclarationNode.retutnType == NULL_TYPE_VALUE){
-			fprintf(stderr, "Function %s is returning not NULL but has return type of %c.\n", node->nodeUnion.functionDeclarationNode.name, node->nodeUnion.functionDeclarationNode.retutnType);
+			fprintf(stderr, "Function %s is returning not NULL but has return type of %s.\n", node->nodeUnion.functionDeclarationNode.name, getValueTypeString(node->nodeUnion.functionDeclarationNode.retutnType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 		}
 
 		if(tmp.evalType != NULL_TYPE && tmp.valueType != node->nodeUnion.functionDeclarationNode.retutnType){
-			fprintf(stderr, "Function %s is returning %c but has return type of %c.\n", node->nodeUnion.functionDeclarationNode.name, tmp.valueType, node->nodeUnion.functionDeclarationNode.retutnType);
+			fprintf(stderr, "Function %s is returning %s but has return type of %s.\n", node->nodeUnion.functionDeclarationNode.name, getValueTypeString(tmp.valueType), getValueTypeString(node->nodeUnion.functionDeclarationNode.retutnType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 		}
 
@@ -152,7 +152,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 			}
 
 			if(argumentFunction->nodeUnion.asignDefineNode.valueType != evalValue->valueType){
-				fprintf(stderr, "Wrong type of argument, got type %c. Function \"%s\" takes argumet of type %c at postion %d.\n", evalValue->valueType, node->nodeUnion.functionCallNode.name, argumentFunction->nodeUnion.asignDefineNode.valueType, i);
+				fprintf(stderr, "Wrong type of argument, got type %s. Function \"%s\" takes argumet of type %s at postion %d.\n", getValueTypeString(evalValue->valueType), node->nodeUnion.functionCallNode.name, getValueTypeString(argumentFunction->nodeUnion.asignDefineNode.valueType), i);
 				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 				return (struct EvalNode){.evalType=NULL_TYPE};
 			}
@@ -175,20 +175,14 @@ struct EvalNode lint(struct Node* node, struct Context *context){
         struct EvalNode left = lint(node->nodeUnion.binaryOperationNode.left, context);
         struct EvalNode right = lint(node->nodeUnion.binaryOperationNode.right, context);
 
-		if(left.evalType == NULL_TYPE || right.evalType == NULL_TYPE){
-            fprintf(stderr, "Left or right side of binary operation is Null. Left is %c. Right is %c.\n", left.evalType, right.evalType);
-			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
-            return (struct EvalNode){.evalType=NULL_TYPE};
-        }
-
 		if(left.evalType != VALUE_TYPE ||  right.evalType != VALUE_TYPE){
-            fprintf(stderr, "Left or right side of binary operation is not VALUE type. Left is %c. Right is %c.\n", left.evalType, right.evalType);
+            fprintf(stderr, "Left or right side of binary operation is not VALUE type. Left is %s. Right is %s.\n", getEvalTypeString(left.evalType), getEvalTypeString(right.evalType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
             return (struct EvalNode){.evalType=NULL_TYPE};
         }
 
 		if(left.valueType != ZERO && left.valueType != right.valueType){
-            fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.valueType, right.valueType);
+            fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %s. Right is %s.\n", getValueTypeString(left.valueType), getValueTypeString(right.valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
             return (struct EvalNode){.evalType=NULL_TYPE};
         }
@@ -301,7 +295,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 		}
 
 		if(tmpExpression->valueType != node->nodeUnion.asignDefineNode.valueType){
-			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->nodeUnion.asignDefineNode.valueType, tmpExpression->valueType);
+			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %s. Right is %s.\n", getValueTypeString(node->nodeUnion.asignDefineNode.valueType), getValueTypeString(tmpExpression->valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE};
 		}
@@ -332,7 +326,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 		struct EvalNode *tmpVariable = contextGetVariable(context, node->nodeUnion.asignDefineNode.name);
 
 		if(tmpExpression->valueType != tmpVariable->valueType){
-			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
+			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %s. Right is %s.\n", getValueTypeString(tmpVariable->valueType), getValueTypeString(tmpExpression->valueType));
 			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE};
 		}
@@ -381,7 +375,7 @@ struct EvalNode lint(struct Node* node, struct Context *context){
 		return (struct EvalNode){.evalType=NULL_TYPE};
 	}
 
-	fprintf(stderr, "ERROR! NODE TYPE %c %d NOT IMPLEMENTED!\n", node->nodeType, node->nodeType);
+	fprintf(stderr, "ERROR! NODE TYPE NOT IMPLEMENTED!\n");
 	fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 	return (struct EvalNode){.evalType=NULL_TYPE};
 }
