@@ -15,3 +15,9 @@ Running to execute file:
 ```
 ./AronScript.exe examples/fiboRec.as
 ```
+
+Running to lint file:
+
+```
+./AronScript.exe check examples/fiboRec.as
+```

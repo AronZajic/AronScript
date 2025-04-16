@@ -90,7 +90,7 @@ void freeNode(void *n){
 
 	struct Node *node = n;
 
-	if(node == NULL){
+	if(node != NULL){
 		free(node);
 		return;
 	}

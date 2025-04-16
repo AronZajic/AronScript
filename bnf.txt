@@ -1,7 +1,7 @@
 <statement> ::= <expression> <NEWLINE> | <declare> |
 	<assign> | <if> | <while> | "break" <NEWLINE> |
 	"continue" <NEWLINE> | <functionDefinition> |
-	<return> | <include>
+	<return>
 <functionDefinition> ::= 
 	"function" <name> "(" <params>? ")" ":" <block> |
 	"function" <name> "(" <params>? ")" -> <type> ":" <block>
@@ -11,7 +11,6 @@
 <elseIf> ::= "elseIf" <expression> ":" <block> <elseIf>
 <else> ::= "else" ":" <block>
 <while> ::= "while" <expression> ":" <block>
-<include> ::= "include" <STRING> <NEWLINE>
 <return> ::= "return" <expression> <NEWLINE>
 <declare> ::= <type> <name> <NEWLINE> |
 	<type> <name> "=" <expression> <NEWLINE>

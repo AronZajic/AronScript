@@ -1,5 +1,5 @@
 #include <string.h>
-#include "interpreter.h"
+#include "linter.h"
 
 int replPrint(struct Node* node, struct Context *context){
 
@@ -421,6 +421,9 @@ int main(int argc, char **argv) {
 
 		read_file(file, program);
 
+		lint(program, context);
+
+		fclose(file);
 	} else {
 		fprintf(stderr, "Wrong number of program arguments.\n");
 		fprintf(stderr, "Usage:\n");
