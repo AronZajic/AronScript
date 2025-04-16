@@ -16,15 +16,8 @@ struct Token eat(){
 }
 
 void wrongTokenPrint(char expected[], struct Token token){
-    
-	/*for(int j = 0; j < 10; j++){
-
-        struct Token token = tokens[j];
-
-        fprintf(stderr, "( %c, %s, %d ), ", token.tokenType, token.value, j);
-
-    }*/
-	fprintf(stderr, "\nWrong token! %s token expected, got %c token at (%d).\n", expected, token.tokenType, token_i_parser-1);
+	fprintf(stderr, "\nWrong token! %s token expected, got %s.\n", expected, getTokenString(token.tokenType));
+    fprintf(stderr, "At line \"%s\" column %d.\n", token.line, token.column);
     exit(EXIT_FAILURE);
 }
 
@@ -41,8 +34,6 @@ struct Node* colon(){
 
 struct Node* integerValue() {
 
-    //printf("Parsing number\n");
-
     struct Token token = eat();
 
     if(token.tokenType != INTEGER_VALUE_TOKEN){
@@ -56,12 +47,12 @@ struct Node* integerValue() {
     node->nodeUnion.valueNode.valueType = INTEGER;
     node->nodeUnion.valueNode.value.integerValue = atoi(token.value);
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 }
 
 struct Node* breakNode() {
-
-    //printf("Parsing number\n");
 
     struct Token token = eat();
 
@@ -74,12 +65,12 @@ struct Node* breakNode() {
 
     node->nodeType = BREAK_NODE;
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 }
 
 struct Node* continueNode() {
-
-    //printf("Parsing number\n");
 
     struct Token token = eat();
 
@@ -92,6 +83,8 @@ struct Node* continueNode() {
 
     node->nodeType = CONTINUE_NODE;
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 }
 
@@ -111,7 +104,7 @@ struct Node* decimalValue() {
     struct Token token = eat();
 
     if(token.tokenType != DECIMAL_VALUE_TOKEN){
-        wrongTokenPrint("DECIMAL VALUE", token);
+        wrongTokenPrint("DECIMAL_VALUE", token);
         return NULL;
     }
 
@@ -120,7 +113,7 @@ struct Node* decimalValue() {
     struct Token token2 = eat();
 
     if(token2.tokenType != INTEGER_VALUE_TOKEN){
-        wrongTokenPrint("INTEGER VALUE", token2);
+        wrongTokenPrint("INTEGER_VALUE", token2);
         return NULL;
     }
 
@@ -133,12 +126,12 @@ struct Node* decimalValue() {
     node->nodeUnion.valueNode.valueType = DECIMAL;
     node->nodeUnion.valueNode.value.decimalValue = atof(tmp);
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 }
 
 struct Node* booleanValue() {
-
-    //printf("Parsing number\n");
 
     struct Token token = eat();
 
@@ -158,12 +151,12 @@ struct Node* booleanValue() {
         node->nodeUnion.valueNode.value.integerValue = 0;
     }
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 }
 
 struct Node* variable() {
-
-    //printf("Parsing number\n");
 
     struct Token token = eat();
 
@@ -175,21 +168,20 @@ struct Node* variable() {
     struct Node* node = malloc(sizeof(struct Node));
 
     node->nodeType = VARIABLE_NODE;
-    //node->name = malloc(sizeof(token.value));
-    //strncpy(node->name, token.value, strlen(token.value));
+
     node->nodeUnion.variableNode.name = g_strdup(token.value);
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 }
 
 struct Node* binaryOperation() {
 
-    //printf("Parsing binary operation\n");
-
     struct Token token = eat();
 
     if(token.tokenType != BINARY_OPERATION_TOKEN){
-        wrongTokenPrint("BINARY OPERATION", token);
+        wrongTokenPrint("BINARY_OPERATION", token);
         return NULL;
     }
 
@@ -199,6 +191,8 @@ struct Node* binaryOperation() {
     node->nodeUnion.binaryOperationNode.binaryOperation = token.value[0];
     node->nodeUnion.binaryOperationNode.presedence = token.presedence;
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 
 }
@@ -216,8 +210,6 @@ struct Node* leftP() {
 
 struct Node* rightP() {
 
-    //printf("Parsing rightP\n");
-
     struct Token token = eat();
 
     if(token.tokenType != RIGHT_P_TOKEN){
@@ -232,8 +224,6 @@ struct Node* expression();
 
 struct Node* negation() {
 
-    //printf("Parsing rightP\n");
-
     struct Token token = eat();
 
     if(token.tokenType != NOT_TOKEN){
@@ -247,9 +237,11 @@ struct Node* negation() {
     {
     case INTEGER_VALUE_TOKEN:
         fprintf(stderr, "Integer value can not be negated.");
+        fprintf(stderr, "At line \"%s\" column %d.\n", peek().line, peek().column);
         return NULL;
     case DECIMAL_VALUE_TOKEN:
         fprintf(stderr, "Decimal value can not be negated.");
+        fprintf(stderr, "At line \"%s\" column %d.\n", peek().line, peek().column);
         return NULL;
     case TRUE_TOKEN:
     case FALSE_TOKEN:
@@ -270,18 +262,18 @@ struct Node* negation() {
         e->nodeUnion.notNode.expression = negation();
         break;
     default:
-        fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
+        fprintf(stderr, "Could not parse expression at line \"%s\" column %d.\n", peek().line, peek().column);
         return NULL;
     }
 
+    e->line = token.line;
+    e->column = token.column;
     return e;
 }
 
 struct Node* handleInfix(struct Node* tmp);
 
 struct Node* expression() {
-
-    //printf("Parsing expression\n");
 
     struct Node* e;
     struct Node* tmp;
@@ -310,25 +302,16 @@ struct Node* expression() {
 		e = handleInfix(tmp);
 		break;
     case LEFT_P_TOKEN:
-        //printf("Expression LEFT\n");
         leftP();
         tmp = expression();
         rightP();
 
-        /*if(peek().tokenType == BINARY_OPERATION_TOKEN){
-            e = binaryOperation();
-            e->left = tmp;
-            e->right = expression();
-        } else {
-            e = tmp;
-        }*/
-
         e = handleInfix(tmp);
         break;
     case BINARY_OPERATION_TOKEN:
-        //printf("Expression BIN\n");
-        if(!(peek().value[0] == MINUS || peek().value[0] == PLUS)){ // TODO prerobiť lebo takto môze začať aj so zobakom
-            fprintf(stderr, "Expression can not start with %c.\n", peek().value[0]);
+        if(!(peek().value[0] == MINUS || peek().value[0] == PLUS)){
+            fprintf(stderr, "Expression can only start with BINARY_OPERATION PLUS or MINUS.");
+            fprintf(stderr, "At line \"%s\" column %d.\n", peek().line, peek().column);
             e = NULL;
             break;
         }
@@ -338,6 +321,9 @@ struct Node* expression() {
         tmp->nodeUnion.valueNode.valueType = ZERO;
         tmp->nodeUnion.valueNode.value.integerValue = 0;
 
+        tmp->line = peek().line;
+        tmp->column = 0;
+
         e = handleInfix(tmp);
 
         break;
@@ -346,7 +332,7 @@ struct Node* expression() {
         e = handleInfix(tmp);
         break;
     default:
-        fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
+        fprintf(stderr, "Could not parse expression at line \"%s\" column %d.\n", peek().line, peek().column);
         break;
     }
 
@@ -380,7 +366,7 @@ void infixHelper(struct Node* dest){
         dest->nodeUnion.binaryOperationNode.right = negation();
         break;
     default:
-		fprintf(stderr, "Could not parse expression at %c %p.\n", peek().tokenType, peek().value);
+        fprintf(stderr, "Could not parse expression at line \"%s\" column %d.\n", peek().line, peek().column);
         dest = NULL;
     }
 }
@@ -428,6 +414,8 @@ struct Node* ifDescend() {
 
 	colon();
 
+    e->line = token.line;
+    e->column = token.column;
     return e;
 }
 
@@ -445,6 +433,8 @@ struct Node* elseIfDescend() {
     e->nodeUnion.ifNode.condition = expression();
 	colon();
 
+    e->line = token.line;
+    e->column = token.column;
     return e;
 }
 
@@ -461,6 +451,8 @@ struct Node* elseDescend() {
 
 	colon();
 
+    e->line = token.line;
+    e->column = token.column;
     return e;
 }
 
@@ -513,9 +505,13 @@ struct Node* integer() {
 
 struct Node* integerDeclaration() {
 
+    struct Node *e = malloc(sizeof(struct Node));
+
+    e->line = peek().line;
+    e->column = peek().column;
+
     integer();
 
-    struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = DEFINE_NODE;
     e->nodeUnion.asignDefineNode.valueType = INTEGER;
 
@@ -529,6 +525,8 @@ struct Node* integerDeclaration() {
         e->nodeUnion.asignDefineNode.expression->nodeType = VALUE_NODE;
         e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.value.integerValue = 0;
         e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.valueType = INTEGER;
+        e->nodeUnion.asignDefineNode.expression->line = e->line;
+        e->nodeUnion.asignDefineNode.expression->column = e->column;
     }
 
     return e;
@@ -546,9 +544,13 @@ struct Node* decimal() {
 
 struct Node* decimalDeclaration() {
 
+    struct Node *e = malloc(sizeof(struct Node));
+
+    e->line = peek().line;
+    e->column = peek().column;
+
     decimal();
 
-    struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = DEFINE_NODE;
     e->nodeUnion.asignDefineNode.valueType = DECIMAL;
 
@@ -562,6 +564,8 @@ struct Node* decimalDeclaration() {
         e->nodeUnion.asignDefineNode.expression->nodeType = VALUE_NODE;
         e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.value.integerValue = 0;
         e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.valueType = DECIMAL;
+        e->nodeUnion.asignDefineNode.expression->line = e->line;
+        e->nodeUnion.asignDefineNode.expression->column = e->column;
     }
 
     return e;
@@ -579,9 +583,13 @@ struct Node* boolean() {
 
 struct Node* booleanDeclaration() {
 
+    struct Node *e = malloc(sizeof(struct Node));
+
+    e->line = peek().line;
+    e->column = peek().column;
+
     boolean();
 
-    struct Node *e = malloc(sizeof(struct Node));
     e->nodeType = DEFINE_NODE;
     e->nodeUnion.asignDefineNode.valueType = BOOLEAN;
 
@@ -595,14 +603,14 @@ struct Node* booleanDeclaration() {
         e->nodeUnion.asignDefineNode.expression->nodeType = VALUE_NODE;
         e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.value.integerValue = 0;
         e->nodeUnion.asignDefineNode.expression->nodeUnion.asignDefineNode.valueType = BOOLEAN;
+        e->nodeUnion.asignDefineNode.expression->line = e->line;
+        e->nodeUnion.asignDefineNode.expression->column = e->column;
     }
 
     return e;
 }
 
 enum ValueType type(){
-
-    //struct Node *e = malloc(sizeof(struct Node));
 
     switch (peek().tokenType)
     {
@@ -672,6 +680,8 @@ struct Node* whileDescend() {
 
     colon();
 
+    e->line = token.line;
+    e->column = token.column;
     return e;
 }
 
@@ -687,6 +697,8 @@ struct Node* returnDescend(){
     e->nodeType = RETURN_NODE;
     e->nodeUnion.returnNode.expression = expression();
 
+    e->line = token.line;
+    e->column = token.column;
     return e;
 }
 
@@ -737,13 +749,13 @@ struct Node* functionDeclaration() {
 
     colon();
 
+    e->line = token.line;
+    e->column = token.column;
     return e;
 }
 
 
 struct Node* functionCall() {
-
-    //printf("Parsing number\n");
 
     struct Token token = eat();
 
@@ -774,12 +786,12 @@ struct Node* functionCall() {
 
     rightP();
 
+    node->line = token.line;
+    node->column = token.column;
     return node;
 }
 
 struct Node* statement() {
-
-    //printf("Parsing expression\n");
 
     struct Node* e;
 
@@ -806,6 +818,8 @@ struct Node* statement() {
         break;
     case NAME_TOKEN:
         e = malloc(sizeof(struct Node));
+        e->line = peek().line;
+        e->column = peek().column;
         //e->name = name();
         char *tmpName = name();
         if(peek().tokenType == ASIGN_TOKEN){
@@ -861,22 +875,12 @@ struct Node* parse(char* src){
         return NULL;
     }
 
-    /*for(int j = 0; j < 10; j++){
-
-        struct Token token = tokens[j];
-
-        printf("( %c, %s, %d ), ", token.tokenType, token.value, j);
-
-    }*/
-
     int indentation = 0;
 
     while(peek().tokenType == TAB_TOKEN){
         indentation++;
         eat();
     }
-
-    //printf("\n");
 
     if(peek().tokenType == END_TOKEN){
         return NULL;
@@ -886,27 +890,10 @@ struct Node* parse(char* src){
 
     if(!(e != NULL && end())){
         fprintf(stderr, "\nParsing not succesfull.\n");
+        fprintf(stderr, "At line \"%s\".\n", src);
         return NULL;
     }
 
-    //treeprint(e, 0);
-
-    /*struct Node* p = e;
-
-    printf("NodeK: %c - %d %c\n", p->nodeType, p->number, p->binaryOperation);
-
-    p = e->left;
-    printf("NodeL: %c - %d %c\n", p->nodeType, p->number, p->binaryOperation);
-    p = e->right;
-    printf("NodeR: %c - %d %c\n", p->nodeType, p->number, p->binaryOperation);
-    p = e->left->right;
-    printf("NodeLR: %c - %d %c\n", p->nodeType, p->number, p->binaryOperation);
-    p = e->left->left;
-    printf("NodeLL: %c - %d %c\n", p->nodeType, p->number, p->binaryOperation);
-    p = e->right->right;
-    printf("NodeRR: %c - %d %c\n", p->nodeType, p->number, p->binaryOperation);
-    p = e->right->left;
-    printf("NodeRL: %c - %d %c\n", p->nodeType, p->number, p->binaryOperation);*/
     e->indentation = indentation;
     return e;
 }

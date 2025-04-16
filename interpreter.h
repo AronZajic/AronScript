@@ -199,6 +199,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		//if(!g_hash_table_contains(context->variables, node->name)){
 		if(!contextVariablesContains(context, node->nodeUnion.variableNode.name)){
 			fprintf(stderr, "Variable with the name \"%s\" does not exist.\n", node->nodeUnion.variableNode.name);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 		
@@ -213,11 +214,13 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 
 		if(tmp.evalType == NULL_TYPE){
 			fprintf(stderr, "Got NULL value as input to not.\n");
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
 		if(tmp.valueType != BOOLEAN){
 			fprintf(stderr, "Got %c type as input to not. Input to not has to be Boolean.\n", tmp.valueType);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -228,6 +231,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(g_hash_table_contains(context->functions, node->nodeUnion.functionDeclarationNode.name)){
 		//if(contextFunctionsContains(context, node->name)){
 			fprintf(stderr, "Function %s already defined.\n", node->nodeUnion.functionDeclarationNode.name);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -240,6 +244,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		//if(!g_hash_table_contains(context->functions, node->name)){
 		if(!contextFunctionsContains(context, node->nodeUnion.functionCallNode.name)){
 			fprintf(stderr, "Function with the name \"%s\" does not exist.\n", node->nodeUnion.functionCallNode.name);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -259,6 +264,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 
 		if(nodeArgsLen != functionDefinitionArgsLen){
 			fprintf(stderr, "Wrong number of arguments. Function \"%s\" takes %d argumet(s).\n", node->nodeUnion.functionCallNode.name, functionDefinitionArgsLen);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 		}
 
 		GList *listIteratorNode = node->nodeUnion.functionCallNode.arguments;
@@ -276,68 +282,68 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 
 			if(evalValue->evalType == NULL_TYPE){
 				fprintf(stderr, "Error, got NULL type as function call argument at position %d.\n", i);
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 
 			if(argumentFunction->nodeUnion.asignDefineNode.valueType != evalValue->valueType){
 				fprintf(stderr, "Wrong type of argument, got type %c. Function \"%s\" takes argumet of type %c at postion %d.\n", evalValue->valueType, node->nodeUnion.functionCallNode.name, argumentFunction->nodeUnion.asignDefineNode.valueType, i);
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 
-			//struct EvalNode *tmp = malloc(sizeof(struct EvalNode));
-			//*tmp->evalType = evalValue.evalType;
+			if(strcmp(node->nodeUnion.functionCallNode.name, "printLineInteger") == 0){
+				printf("%d\n", evalValue->value.integerValue);
+				g_hash_table_destroy(contextInFunction.variables);
+				g_hash_table_destroy(contextInFunction.functions);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+			}
+			if(strcmp(node->nodeUnion.functionCallNode.name, "printInteger") == 0){
+				printf("%d", evalValue->value.integerValue);
+				g_hash_table_destroy(contextInFunction.variables);
+				g_hash_table_destroy(contextInFunction.functions);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+			}
+	
+			if(strcmp(node->nodeUnion.functionCallNode.name, "printLineDecimal") == 0){
+				printf("%f\n", evalValue->value.decimalValue);
+				g_hash_table_destroy(contextInFunction.variables);
+				g_hash_table_destroy(contextInFunction.functions);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+			}
+			if(strcmp(node->nodeUnion.functionCallNode.name, "printDecimal") == 0){
+				printf("%f", evalValue->value.decimalValue);
+				g_hash_table_destroy(contextInFunction.variables);
+				g_hash_table_destroy(contextInFunction.functions);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+			}
+	
+			if(strcmp(node->nodeUnion.functionCallNode.name, "printLineBoolean") == 0){
+				if(evalValue->value.integerValue){
+					printf("True\n");
+				} else {
+					printf("False\n");
+				}
+				g_hash_table_destroy(contextInFunction.variables);
+				g_hash_table_destroy(contextInFunction.functions);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+			}
+			if(strcmp(node->nodeUnion.functionCallNode.name, "printBoolean") == 0){
+				if(evalValue->value.integerValue){
+					printf("True");
+				} else {
+					printf("False");
+				}
+				g_hash_table_destroy(contextInFunction.variables);
+				g_hash_table_destroy(contextInFunction.functions);
+				return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+			}
 
 			g_hash_table_insert(contextInFunction.variables, g_strdup(argumentFunction->nodeUnion.asignDefineNode.name), evalValue);
 
 			listIteratorNode = listIteratorNode->next;
 			listIteratorDefinition = listIteratorDefinition->next;
 			i++;
-		}
-
-		// Todo check for null eval type
-		if(strcmp(node->nodeUnion.functionCallNode.name, "printLineInteger") == 0){
-			printf("%d\n", eval((struct Node*)node->nodeUnion.functionCallNode.arguments->data, context).value.integerValue);
-			g_hash_table_destroy(contextInFunction.variables);
-			g_hash_table_destroy(contextInFunction.functions);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
-		}
-		if(strcmp(node->nodeUnion.functionCallNode.name, "printInteger") == 0){
-			printf("%d", eval((struct Node*)node->nodeUnion.functionCallNode.arguments->data, context).value.integerValue);
-			g_hash_table_destroy(contextInFunction.variables);
-			g_hash_table_destroy(contextInFunction.functions);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
-		}
-
-		if(strcmp(node->nodeUnion.functionCallNode.name, "printLineDecimal") == 0){
-			printf("%f\n", eval((struct Node*)node->nodeUnion.functionCallNode.arguments->data, context).value.decimalValue);
-			g_hash_table_destroy(contextInFunction.variables);
-			g_hash_table_destroy(contextInFunction.functions);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
-		}
-		if(strcmp(node->nodeUnion.functionCallNode.name, "printDecimal") == 0){
-			printf("%f", eval((struct Node*)node->nodeUnion.functionCallNode.arguments->data, context).value.decimalValue);
-			g_hash_table_destroy(contextInFunction.variables);
-			g_hash_table_destroy(contextInFunction.functions);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
-		}
-
-		if(strcmp(node->nodeUnion.functionCallNode.name, "printLineBoolean") == 0){
-			if(eval((struct Node*)node->nodeUnion.functionCallNode.arguments->data, context).value.integerValue){
-				printf("True\n");
-			} else {
-				printf("False\n");
-			}
-			g_hash_table_destroy(contextInFunction.variables);
-			g_hash_table_destroy(contextInFunction.functions);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
-		}
-		if(strcmp(node->nodeUnion.functionCallNode.name, "printBoolean") == 0){
-			if(eval((struct Node*)node->nodeUnion.functionCallNode.arguments->data, context).value.integerValue){
-				printf("True");
-			} else {
-				printf("False");
-			}
-			g_hash_table_destroy(contextInFunction.variables);
-			g_hash_table_destroy(contextInFunction.functions);
-			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
 		struct EvalNode evalNodeTmp = eval(functionDefinition->nodeUnion.functionDeclarationNode.statements, &contextInFunction);
@@ -347,6 +353,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 
 			if(evalNodeTmp.valueType != functionDefinition->nodeUnion.functionDeclarationNode.retutnType){
 				fprintf(stderr, "Wrong return type %c. Function \"%s\" return type %c.\n", evalNodeTmp.valueType, node->nodeUnion.functionCallNode.name, functionDefinition->nodeUnion.functionDeclarationNode.retutnType);
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			}
 
 			return (struct EvalNode){.evalType=VALUE_TYPE, .valueType=functionDefinition->nodeUnion.functionDeclarationNode.retutnType, .value.integerValue=evalNodeTmp.value.integerValue};
@@ -368,23 +375,21 @@ struct EvalNode eval(struct Node* node, struct Context *context){
         struct EvalNode left = eval(node->nodeUnion.binaryOperationNode.left, context);
         struct EvalNode right = eval(node->nodeUnion.binaryOperationNode.right, context);
 
-        /*if(left.evalType != right.evalType){
-            fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.evalType, right.evalType);
-            return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
-        }*/
-
 		if(left.evalType == NULL_TYPE || right.evalType == NULL_TYPE){
             fprintf(stderr, "Left or right side of binary operation is Null. Left is %c. Right is %c.\n", left.evalType, right.evalType);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
             return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
         }
 
 		if(left.evalType != VALUE_TYPE ||  right.evalType != VALUE_TYPE){
             fprintf(stderr, "Left or right side of binary operation is not VALUE type. Left is %c. Right is %c.\n", left.evalType, right.evalType);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
             return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
         }
 
 		if(left.valueType != ZERO && left.valueType != right.valueType){
             fprintf(stderr, "Left and right side of binary operation are not the same type. Left is %c. Right is %c.\n", left.valueType, right.valueType);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
             return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
         }
 
@@ -437,6 +442,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 		}
@@ -483,10 +489,12 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 				break;
 			case REMAINDER:
 				fprintf(stderr, "Decimal types do not support %% operation.\n");
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 		}
@@ -517,10 +525,12 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 			case DIVIDE:
 			case REMAINDER:
 				fprintf(stderr, "BOOLEAN types do not support <, >, <=, >= and aritmetic operations.\n");
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 				break;
 			default:
 				fprintf(stderr, "Wrong Binary operation.\n");
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 				result = (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 			}
 		}
@@ -532,16 +542,22 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		if(g_hash_table_contains(context->variables, node->nodeUnion.asignDefineNode.name)){
 		//if(contextVariablesContains(context, node->name)){
 			fprintf(stderr, "Variable %s already defined.\n", node->nodeUnion.asignDefineNode.name);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
 		*tmpExpression = eval(node->nodeUnion.asignDefineNode.expression, context);
 
-		// TODO check for null eval type
+		if(tmpExpression->evalType == NULL_TYPE){
+			fprintf(stderr, "Right side of declaration is NULL.\n");
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+		}
 
 		if(tmpExpression->valueType != node->nodeUnion.asignDefineNode.valueType){
 			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->nodeUnion.asignDefineNode.valueType, tmpExpression->valueType);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -554,19 +570,25 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 		//if(!g_hash_table_contains(context->variables, node->name)){
 		if(!contextVariablesContains(context, node->nodeUnion.asignDefineNode.name)){
 			fprintf(stderr, "Variable %s not defined.\n", node->nodeUnion.asignDefineNode.name);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
 		*tmpExpression = eval(node->nodeUnion.asignDefineNode.expression, context);
 
-		// TODO check for null eval type
+		if(tmpExpression->evalType == NULL_TYPE){
+			fprintf(stderr, "Right side of asignment is NULL.\n");
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
+			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
+		}
 
 		//struct EvalNode *tmpVariable = g_hash_table_lookup(context->variables, node->name);
 		struct EvalNode *tmpVariable = contextGetVariable(context, node->nodeUnion.asignDefineNode.name);
 
 		if(tmpExpression->valueType != tmpVariable->valueType){
 			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", tmpVariable->valueType, tmpExpression->valueType);
+			fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 			return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 		}
 
@@ -621,6 +643,7 @@ struct EvalNode eval(struct Node* node, struct Context *context){
 	}
 
 	fprintf(stderr, "ERROR! NODE TYPE %c %d NOT IMPLEMENTED!\n", node->nodeType, node->nodeType);
+	fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
 	return (struct EvalNode){.evalType=NULL_TYPE, .value.integerValue=0};
 }
 

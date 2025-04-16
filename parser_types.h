@@ -117,6 +117,9 @@ struct Node {
     enum NodeType nodeType;
     int indentation;
 
+    char *line;
+    int column;
+
     union NodeUnion nodeUnion;
 
     // Type VALUE

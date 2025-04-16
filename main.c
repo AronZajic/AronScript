@@ -63,41 +63,6 @@ int replPrint(struct Node* node, struct Context *context){
 		return 0;
 	}
 
-	/*if(node->nodeType == DEFINE_NODE || node->nodeType == ASIGN_NODE){
-
-		if(node->nodeType == DEFINE_NODE && g_hash_table_contains(contextVariables, node->name)){
-			fprintf(stderr, "Variable %s already defined.\n", node->name);
-			return 0;
-		}
-
-		struct EvalNode *tmp = malloc(sizeof(struct EvalNode));
-		*tmp = eval(node->expression, contextVariables, contextFunctions);
-
-		if(tmp->valueType != node->valueType){
-			fprintf(stderr, "Left and right side of asignment are not the same type. Left is %c. Right is %c.\n", node->valueType, tmp->evalType);
-			return 0;
-		}
-
-		g_hash_table_insert(contextVariables, g_strdup(node->name), (tmp));
-		tmp = g_hash_table_lookup(contextVariables, node->name);
-		
-		if(tmp->valueType == INTEGER){
-			printf("Integer %s set to %d.\n", node->name, tmp->value.integerValue);
-		}
-		if(tmp->valueType == DECIMAL){
-			printf("Decimal %s set to %f.\n", node->name, tmp->value.decimalValue);
-		}
-		if(tmp->valueType == BOOLEAN){
-			if(tmp->value.integerValue){
-				printf("Boolean %s set to True.\n", node->name);
-			} else {
-				printf("Boolean %s set to False.\n", node->name);
-			}
-		}
-
-		return 0;
-	}*/
-
 	if(node->nodeType == DEFINE_NODE){
 
 		if(g_hash_table_contains(context->variables, node->nodeUnion.asignDefineNode.name)){
@@ -107,6 +72,12 @@ int replPrint(struct Node* node, struct Context *context){
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
 		*tmpExpression = eval(node->nodeUnion.asignDefineNode.expression, context);
+
+
+		if(tmpExpression->evalType == NULL_TYPE){
+			fprintf(stderr, "Right side of declaration is NULL.\n");
+			return 0;
+		}
 
 		if(tmpExpression->valueType != node->nodeUnion.asignDefineNode.valueType){
 			fprintf(stderr, "Left and right side of declaration are not the same type. Left is %c. Right is %c.\n", node->nodeUnion.asignDefineNode.valueType, tmpExpression->valueType);
@@ -141,6 +112,11 @@ int replPrint(struct Node* node, struct Context *context){
 
 		struct EvalNode *tmpExpression = malloc(sizeof(struct EvalNode));
 		*tmpExpression = eval(node->nodeUnion.asignDefineNode.expression, context);
+
+		if(tmpExpression->evalType == NULL_TYPE){
+			fprintf(stderr, "Right side of asignment is NULL.\n");
+			return 0;
+		}
 
 		struct EvalNode *tmpVariable = g_hash_table_lookup(context->variables, node->nodeUnion.asignDefineNode.name);
 
@@ -190,8 +166,6 @@ struct Node* read_file(FILE *file, struct Node *parent){
 
 	while(fgets(line, sizeof(line), file)) {
 
-		//printf("%s", line);
-
 		line[strcspn(line, "\n")] = 0;
 		node = parse(line);
 
@@ -204,6 +178,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 
 			if(node->indentation > parent->indentation + 1){
 				fprintf(stderr, "Wrong indentation!\n");
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
                 exit(EXIT_FAILURE);
 			}
 
@@ -294,6 +269,7 @@ struct Node* replRead(struct Node *parent, char lineStart[]){
 
 			if(node->indentation > parent->indentation + 1){
 				fprintf(stderr, "Wrong indentation!");
+				fprintf(stderr, "At line \"%s\" column %d.\n", node->line, node->column);
                 // TODO delete already loaded data and not execute further
 			}
 
@@ -406,7 +382,7 @@ int main(int argc, char **argv) {
 			if(g_list_length(program->nodeUnion.statementsNode.body) != 0)
 				replPrint(program->nodeUnion.statementsNode.body->data, context);
 		}
-	} else {
+	} else if(argc == 2) {
 
 		FILE *file;
 
@@ -423,6 +399,35 @@ int main(int argc, char **argv) {
 		//eval(program, context);
 
 		fclose(file);
+	} else if(argc == 3){
+
+		if(strcmp(argv[1], "check") != 0){
+			fprintf(stderr, "Wrong program arguments.\n");
+			fprintf(stderr, "Usage:\n");
+			fprintf(stderr, "\tAronScript \t\t\t- for running as REPL\n");
+			fprintf(stderr, "\tAronScript fileName \t\t- for executing a file\n");
+			fprintf(stderr, "\tAronScript check fileName \t- for using the linter on a file\n");
+			exit(EXIT_FAILURE);
+		}
+
+		FILE *file;
+
+		file = fopen(argv[2], "r");
+
+        if(file == NULL){
+            fprintf(stderr, "File \"%s\" does not exist.\n", argv[1]);
+            exit(EXIT_FAILURE);
+        }
+
+		read_file(file, program);
+
+	} else {
+		fprintf(stderr, "Wrong number of program arguments.\n");
+		fprintf(stderr, "Usage:\n");
+		fprintf(stderr, "\tAronScript \t\t\t- for running as REPL\n");
+		fprintf(stderr, "\tAronScript fileName \t\t- for executing a file\n");
+		fprintf(stderr, "\tAronScript check fileName \t- for using the linter on a file\n");
+        exit(EXIT_FAILURE);
 	}
 
 	freeNode(program);

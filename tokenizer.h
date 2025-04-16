@@ -57,25 +57,79 @@ enum TokenType {
     END_TOKEN = 'E',
 };
 
+char *sourceCode[1024];
+
+int sourceCode_i = -1;
+
 struct Token {
     enum TokenType tokenType;
     char value[64];
     int presedence;
+    char *line;
+    int column;
 };
 
-char* getKeywordTokenTypeString(enum TokenType tokenType){
+char* getTokenString(enum TokenType tokenType){
     switch (tokenType)
     {
-    case WHILE_TOKEN:
-        return "while";
     case INTEGER_TOKEN:
-        return "Integer";
+        return "INTEGER";
     case DECIMAL_TOKEN:
-        return "Decimal";
-    case FUNCTION_TOKEN:
-        return "fun";
+        return "DECIMAL";
+    case BOOLEAN_TOKEN:
+        return "BOOLEAN";
+    case TRUE_TOKEN:
+        return "TRUE";
+    case FALSE_TOKEN:
+        return "FALSE";
     case IF_TOKEN:
-        return "if";
+        return "IF";
+    case ELSE_TOKEN:
+        return "ELSE";
+    case ELSE_IF_TOKEN:
+        return "ELSE_IF";
+    case NOT_TOKEN:
+        return "NOT";
+    case BREAK_TOKEN:
+        return "BREAK";
+    case CONTINUE_TOKEN:
+        return "CONTINUE";
+    case WHILE_TOKEN:
+        return "WHILE";
+    case FUNCTION_TOKEN:
+        return "FUNCTION";
+    case RETURN_TOKEN:
+        return "RETURN";
+    case INTEGER_VALUE_TOKEN:
+        return "INTEGER_VALUE";
+    case DECIMAL_VALUE_TOKEN:
+        return "DECIMAL_VALUE";
+    case BINARY_OPERATION_TOKEN:
+        return "BINARY_OPERATION";
+    case TAB_TOKEN:
+        return "TAB";
+    case NAME_TOKEN:
+        return "NAME";
+    case FUNCTION_CALL_TOKEN:
+        return "FUNCTION_CALL";
+    case LEFT_P_TOKEN:
+        return "LEFT_P";
+    case RIGHT_P_TOKEN:
+        return "RIGHT_P";
+    case COMA_TOKEN:
+        return "COMA";
+    case DOT_TOKEN:
+        return "DOT";
+    case ASIGN_TOKEN:
+        return "ASIGN";
+    case EQUALS_TOKEN:
+        return "EQUALS";
+    case COLON_TOKEN:
+        return "COLON";
+    case ARROW_TOKEN:
+        return "ARROW";
+    case END_TOKEN:
+        return "END";
     default:
         return NULL;
     }
@@ -177,18 +231,25 @@ int tokenize(char src[], struct Token tokens[]){
     src_i = 0;
     token_i = 0;
 
+    sourceCode[++sourceCode_i] = g_strdup(src);
+
     if(match(src, " ", NULL, 0)){
 
         fprintf(stderr, "Line can not start with space.\n");
+        fprintf(stderr, "At line \"%s\".\n", src);
 
         return 0;
     }
 
     while(match(src, "\t", NULL, 0)){
+        tokens[token_i].line = sourceCode[sourceCode_i];
         tokens[token_i++].tokenType = TAB_TOKEN;
     }
 
     while(src_i < strlen(src)){
+
+        tokens[token_i].line = sourceCode[sourceCode_i];
+        tokens[token_i].column = src_i;
 
         if(match(src, "\t", NULL, 0)){
             continue;
@@ -410,6 +471,7 @@ int tokenize(char src[], struct Token tokens[]){
         }
 
         fprintf(stderr, "Input coud not be tokenized.\n");
+        fprintf(stderr, "At line \"%s\".\n", src);
         return 0;
     }
 
