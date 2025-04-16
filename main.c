@@ -158,7 +158,7 @@ int replPrint(struct Node* node, struct Context *context){
 	return 0;
 }
 
-struct Node* read_file(FILE *file, struct Node *parent){
+struct Node* readFile(FILE *file, struct Node *parent){
 
 	char line[1024];
 
@@ -191,7 +191,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 				node->nodeUnion.whileNode.statements->indentation = node->indentation;
 				node->nodeUnion.whileNode.statements->nodeType = STATEMENTS_NODE;
 				node->nodeUnion.whileNode.statements->nodeUnion.statementsNode.body = NULL;
-				struct Node* tmp = read_file(file, node->nodeUnion.whileNode.statements);
+				struct Node* tmp = readFile(file, node->nodeUnion.whileNode.statements);
 				node = tmp;
 				goto placeNode;
 			}
@@ -201,7 +201,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 				node->nodeUnion.functionDeclarationNode.statements->indentation = node->indentation;
 				node->nodeUnion.functionDeclarationNode.statements->nodeType = STATEMENTS_NODE;
 				node->nodeUnion.functionDeclarationNode.statements->nodeUnion.statementsNode.body = NULL;
-				struct Node* tmp = read_file(file, node->nodeUnion.functionDeclarationNode.statements);
+				struct Node* tmp = readFile(file, node->nodeUnion.functionDeclarationNode.statements);
 				node = tmp;
 				goto placeNode;
 			}
@@ -213,7 +213,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 				node->nodeUnion.ifNode.ifBody->nodeUnion.statementsNode.body = NULL;
 				node->nodeUnion.ifNode.elseBody = NULL;
 
-				struct Node* tmp = read_file(file, node->nodeUnion.ifNode.ifBody);
+				struct Node* tmp = readFile(file, node->nodeUnion.ifNode.ifBody);
 				struct Node* tmpDescend = node;
 
 				while(tmp != NULL && tmp->nodeType == ELSE_IF_NODE){
@@ -225,7 +225,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->nodeType = STATEMENTS_NODE;
 					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody->nodeUnion.statementsNode.body = NULL;
 
-					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody);
+					tmp = readFile(file, tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.ifNode.ifBody);
 					tmpDescend = tmpDescend->nodeUnion.ifNode.elseBody;
 				}
 
@@ -235,7 +235,7 @@ struct Node* read_file(FILE *file, struct Node *parent){
 					tmpDescend->nodeUnion.ifNode.elseBody->nodeType = STATEMENTS_NODE;
 					tmpDescend->nodeUnion.ifNode.elseBody->nodeUnion.statementsNode.body = NULL;
 					free(tmp);
-					tmp = read_file(file, tmpDescend->nodeUnion.ifNode.elseBody);
+					tmp = readFile(file, tmpDescend->nodeUnion.ifNode.elseBody);
 				}
 				node = tmp;
 				goto placeNode;
@@ -393,7 +393,7 @@ int main(int argc, char **argv) {
             exit(EXIT_FAILURE);
         }
 
-		read_file(file, program);
+		readFile(file, program);
 
 		replPrint(program, context);
 		//eval(program, context);
@@ -419,7 +419,7 @@ int main(int argc, char **argv) {
             exit(EXIT_FAILURE);
         }
 
-		read_file(file, program);
+		readFile(file, program);
 
 		lint(program, context);
 
